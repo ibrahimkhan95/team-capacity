@@ -60,6 +60,49 @@ export default function App() {
 
   if (!session) return <Auth />
 
+  const ALLOWED_EMAILS = [
+    'ibrahim.khan@arbisoft.com',
+    'ahmed.hashmi@arbisoft.com',
+    'arsal.idrees@arbisoft.com',
+    'muhammad.ali.ashraf@arbisoft.com',
+  ]
+
+  if (!ALLOWED_EMAILS.includes(session.user.email)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen w-full bg-bg">
+        <div className="bg-sur border rounded-2xl p-10 w-full max-w-sm text-center"
+          style={{ borderColor: 'rgba(13,55,100,0.10)', boxShadow: '0 8px 32px rgba(13,55,100,0.12)' }}>
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <img
+              src="https://cdn.prod.website-files.com/617123e41df66d0e7f6dbea7/61a7b46ff625c1d97f6924a0_Logo-mark.svg"
+              alt="Nurture"
+              className="w-8 h-8"
+            />
+            <div className="text-left">
+              <div className="font-serif text-nb text-lg leading-none">nurture</div>
+              <div className="text-[10px] mt-0.5 font-mono tracking-wider" style={{ color: 'rgba(13,55,100,0.42)' }}>
+                squad capacity
+              </div>
+            </div>
+          </div>
+          <p className="font-serif text-nb text-base mb-2">Access restricted</p>
+          <p className="text-[13px] font-mono mb-6" style={{ color: 'rgba(13,55,100,0.42)' }}>
+            <strong>{session.user.email}</strong> is not authorised to use this app.
+          </p>
+          <button
+            onClick={signOut}
+            className="text-[13px] font-mono transition-colors"
+            style={{ color: 'rgba(13,55,100,0.42)' }}
+            onMouseEnter={e => e.target.style.color = '#E3492B'}
+            onMouseLeave={e => e.target.style.color = 'rgba(13,55,100,0.42)'}
+          >
+            sign out
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const squadMembers = currentSquad
     ? members.filter(m => m.squad === currentSquad)
     : []
