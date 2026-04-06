@@ -22,12 +22,12 @@ export const formatDate = (d) => {
   return `${day}/${m}/${y}`
 }
 
-// Converts DD/MM/YYYY input to YYYY-MM-DD for storage
+// Converts DD/MM/YYYY input to YYYY-MM-DD for storage (only when complete)
 export const parseDate = (d) => {
   if (!d) return ''
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(d)) return ''
   const [day, m, y] = d.split('/')
-  if (!day || !m || !y) return d
-  return `${y}-${m.padStart(2,'0')}-${day.padStart(2,'0')}`
+  return `${y}-${m}-${day}`
 }
 
 export const totalAlloc = (assignments) =>

@@ -34,7 +34,7 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
   }, [])
 
   function addAssignment() {
-    setAssignments(prev => [...prev, { project: '', engagement: 'Full Time (100%)', pct: 100, start_date: '', notes: '' }])
+    setAssignments(prev => [...prev, { project: '', engagement: 'Full Time (100%)', pct: 100, start_date: '', start_date_input: '', notes: '' }])
   }
 
   function removeAssignment(i) {
@@ -64,7 +64,7 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
           .single()
         if (mErr) throw mErr
         if (assignments.length > 0) {
-          const rows = assignments.map(a => ({ ...a, member_id: newMember.id }))
+          const rows = assignments.map(({ start_date_input: _sdi, ...a }) => ({ ...a, member_id: newMember.id }))
           const { error: aErr } = await supabase.from('assignments').insert(rows)
           if (aErr) throw aErr
         }
@@ -77,7 +77,7 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
         if (mErr) throw mErr
         await supabase.from('assignments').delete().eq('member_id', member.id)
         if (assignments.length > 0) {
-          const rows = assignments.map(({ id: _id, member_id: _mid, ...rest }) => ({
+          const rows = assignments.map(({ id: _id, member_id: _mid, start_date_input: _sdi, ...rest }) => ({
             ...rest,
             member_id: member.id,
           }))
@@ -216,8 +216,14 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
                           </select>
                         </FormGroup>
                         <FormGroup label="Start date">
-                          <input type="text" value={a.start_date ? formatDate(a.start_date) : ''}
-                            onChange={e => updateAssignment(i, 'start_date', parseDate(e.target.value))}
+                          <input type="text"
+                            value={a.start_date_input !== undefined ? a.start_date_input : (a.start_date ? formatDate(a.start_date) : '')}
+                            onChange={e => {
+                              const raw = e.target.value
+                              const parsed = parseDate(raw)
+                              updateAssignment(i, 'start_date_input', raw)
+                              if (parsed) updateAssignment(i, 'start_date', parsed)
+                            }}
                             placeholder="DD/MM/YYYY"
                             className={inputCls} style={inputStyle}
                             onFocus={e => e.target.style.borderColor = '#E3492B'}
