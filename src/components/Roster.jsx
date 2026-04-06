@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Search, Plus, ChevronLeft, ChevronRight, MoveRight } from 'lucide-react'
-import { totalAlloc, PROJECT_COLORS } from '../lib/utils'
+import { totalAlloc, PROJECT_COLORS, formatDate } from '../lib/utils'
 import { StatusPill, SeniorityPill, AllocPill } from './Pill'
 import { MemberModal } from './MemberModal'
 
@@ -161,7 +161,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
                       </span>
                     </td>
                     <td className="py-2 text-[13px] font-mono" style={{ color: 'rgba(13,55,100,0.42)' }}>
-                      since {a.start_date || '—'}
+                      since {formatDate(a.start_date)}
                     </td>
                     <td colSpan={2} className="py-2">
                       <div className="flex items-center gap-2">

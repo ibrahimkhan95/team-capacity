@@ -15,6 +15,13 @@ export const ENGAGEMENT_OPTIONS = [
   { label: 'Part Time (25%)', pct: 25  },
 ]
 
+// Converts YYYY-MM-DD to DD/MM/YYYY
+export const formatDate = (d) => {
+  if (!d) return '—'
+  const [y, m, day] = d.split('-')
+  return `${day}/${m}/${y}`
+}
+
 export const totalAlloc = (assignments) =>
   (assignments || []).reduce((s, a) => s + (a.pct || 0), 0)
 
