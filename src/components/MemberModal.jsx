@@ -44,9 +44,10 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
   function updateAssignment(i, field, value) {
     setAssignments(prev => prev.map((a, idx) => {
       if (idx !== i) return a
-      const updated = { ...a, [field]: value }
-      if (field === 'engagement') {
-        updated.pct = ENGAGEMENT_OPTIONS.find(o => o.label === value)?.pct || 100
+      const fields = typeof field === 'object' ? field : { [field]: value }
+      const updated = { ...a, ...fields }
+      if ('engagement' in fields) {
+        updated.pct = ENGAGEMENT_OPTIONS.find(o => o.label === fields.engagement)?.pct || 100
       }
       return updated
     }))
@@ -219,10 +220,12 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
                           <input type="text"
                             value={a.start_date_input !== undefined ? a.start_date_input : (a.start_date ? formatDate(a.start_date) : '')}
                             onChange={e => {
-                              const raw = e.target.value
-                              const parsed = parseDate(raw)
-                              updateAssignment(i, 'start_date_input', raw)
-                              if (parsed) updateAssignment(i, 'start_date', parsed)
+                              let val = e.target.value.replace(/[^\d]/g, '')
+                              if (val.length >= 3) val = val.slice(0,2) + '/' + val.slice(2)
+                              if (val.length >= 6) val = val.slice(0,5) + '/' + val.slice(5)
+                              val = val.slice(0, 10)
+                              const parsed = parseDate(val)
+                              updateAssignment(i, { start_date_input: val, ...(parsed && { start_date: parsed }) })
                             }}
                             placeholder="DD/MM/YYYY"
                             className={inputCls} style={inputStyle}
