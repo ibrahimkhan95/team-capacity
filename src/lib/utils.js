@@ -15,11 +15,19 @@ export const ENGAGEMENT_OPTIONS = [
   { label: 'Part Time (25%)', pct: 25  },
 ]
 
-// Converts YYYY-MM-DD to DD/MM/YYYY
+// Converts YYYY-MM-DD to DD/MM/YYYY for display
 export const formatDate = (d) => {
   if (!d) return '—'
   const [y, m, day] = d.split('-')
   return `${day}/${m}/${y}`
+}
+
+// Converts DD/MM/YYYY input to YYYY-MM-DD for storage
+export const parseDate = (d) => {
+  if (!d) return ''
+  const [day, m, y] = d.split('/')
+  if (!day || !m || !y) return d
+  return `${y}-${m.padStart(2,'0')}-${day.padStart(2,'0')}`
 }
 
 export const totalAlloc = (assignments) =>

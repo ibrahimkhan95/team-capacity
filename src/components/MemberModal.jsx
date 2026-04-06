@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { ENGAGEMENT_OPTIONS } from '../lib/utils'
+import { ENGAGEMENT_OPTIONS, formatDate, parseDate } from '../lib/utils'
 import { showToast } from './Toast'
 
 export function MemberModal({ member, squad, onClose, onSaved }) {
@@ -216,8 +216,9 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
                           </select>
                         </FormGroup>
                         <FormGroup label="Start date">
-                          <input type="date" value={a.start_date || ''}
-                            onChange={e => updateAssignment(i, 'start_date', e.target.value)}
+                          <input type="text" value={a.start_date ? formatDate(a.start_date) : ''}
+                            onChange={e => updateAssignment(i, 'start_date', parseDate(e.target.value))}
+                            placeholder="DD/MM/YYYY"
                             className={inputCls} style={inputStyle}
                             onFocus={e => e.target.style.borderColor = '#E3492B'}
                             onBlur={e => e.target.style.borderColor = 'rgba(13,55,100,0.10)'} />
