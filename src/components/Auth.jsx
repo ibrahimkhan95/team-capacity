@@ -21,7 +21,7 @@ export function Auth() {
   return (
     <div className="flex items-center justify-center min-h-screen w-full bg-bg">
       <div className="bg-sur border-2 p-10 w-full max-w-sm"
-        style={{ borderColor: '#0D3764', boxShadow: '4px 4px 0px #0D3764' }}>
+        style={{ borderColor: '#0D3764' }}>
 
         <div className="flex items-center gap-3 mb-8">
           <img

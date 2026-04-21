@@ -72,7 +72,7 @@ export default function App() {
     return (
       <div className="flex items-center justify-center min-h-screen w-full bg-bg">
         <div className="bg-sur border-2 p-10 w-full max-w-sm text-center"
-          style={{ borderColor: '#0D3764', boxShadow: '4px 4px 0px #0D3764' }}>
+          style={{ borderColor: '#0D3764' }}>
           <div className="flex items-center justify-center gap-3 mb-8">
             <img
               src="https://cdn.prod.website-files.com/617123e41df66d0e7f6dbea7/61a7b46ff625c1d97f6924a0_Logo-mark.svg"

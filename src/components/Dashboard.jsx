@@ -115,7 +115,7 @@ function Tooltip({ text }) {
 
 function SummaryCard({ label, tooltip, value, sub, valueColor, icon, iconBg }) {
   return (
-    <div className="bg-sur border-2 p-7" style={{ borderColor: '#0D3764', boxShadow: '4px 4px 0px #F8A978' }}>
+    <div className="bg-sur border-2 p-7" style={{ borderColor: '#0D3764' }}>
       <div className="flex items-center justify-between mb-5">
         <span className="inline-flex items-center text-[11px] tracking-[0.12em] font-mono lowercase" style={{ color: 'rgba(13,55,100,0.42)' }}>
           {label}

@@ -96,7 +96,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
 
       {/* Table */}
       <div className="bg-sur border-2 overflow-hidden"
-        style={{ borderColor: '#0D3764', boxShadow: '4px 4px 0px #F8A978' }}>
+        style={{ borderColor: '#0D3764' }}>
         <table className="w-full border-collapse">
           <thead>
             <tr>
