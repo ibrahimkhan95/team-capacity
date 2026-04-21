@@ -12,7 +12,7 @@ const U = {
 function Chip({ bg, text, border, children }) {
   return (
     <span
-      className="inline-flex items-center font-mono text-[12px] font-medium px-2.5 py-[3px] rounded-full whitespace-nowrap"
+      className="inline-flex items-center font-mono text-[12px] font-medium px-2.5 py-[3px] whitespace-nowrap"
       style={{ background: bg, color: text, ...(border ? { border: `1px solid ${border}` } : {}) }}
     >
       {children}

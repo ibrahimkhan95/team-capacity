@@ -18,9 +18,10 @@ export function Toast() {
 
   return (
     <div
-      className="fixed bottom-6 right-6 bg-nb rounded-lg px-5 py-3 text-xs text-white z-[200] font-mono pointer-events-none transition-all duration-200"
+      className="fixed bottom-6 right-6 bg-nb border-2 px-5 py-3 text-xs text-white z-[200] font-mono pointer-events-none transition-all duration-200"
       style={{
-        boxShadow: '0 8px 32px rgba(13,55,100,0.20)',
+        borderColor: '#0D3764',
+        boxShadow: '4px 4px 0px #F8A978',
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(6px)',
       }}

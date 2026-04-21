@@ -52,7 +52,7 @@ export default function App() {
 
   if (!authChecked) {
     return (
-      <div className="flex items-center justify-center min-h-screen w-full" style={{ background: '#F5F7FA' }}>
+      <div className="flex items-center justify-center min-h-screen w-full bg-bg">
         <div className="text-xs font-mono" style={{ color: 'rgba(13,55,100,0.42)' }}>loading…</div>
       </div>
     )
@@ -71,8 +71,8 @@ export default function App() {
   if (!ALLOWED_EMAILS.includes(session.user.email)) {
     return (
       <div className="flex items-center justify-center min-h-screen w-full bg-bg">
-        <div className="bg-sur border rounded-2xl p-10 w-full max-w-sm text-center"
-          style={{ borderColor: 'rgba(13,55,100,0.10)', boxShadow: '0 8px 32px rgba(13,55,100,0.12)' }}>
+        <div className="bg-sur border-2 p-10 w-full max-w-sm text-center"
+          style={{ borderColor: '#0D3764', boxShadow: '4px 4px 0px #0D3764' }}>
           <div className="flex items-center justify-center gap-3 mb-8">
             <img
               src="https://cdn.prod.website-files.com/617123e41df66d0e7f6dbea7/61a7b46ff625c1d97f6924a0_Logo-mark.svg"
@@ -86,13 +86,13 @@ export default function App() {
               </div>
             </div>
           </div>
-          <p className="font-serif text-nb text-base mb-2">Access restricted</p>
+          <p className="font-serif text-nb text-base mb-2">access restricted</p>
           <p className="text-[13px] font-mono mb-6" style={{ color: 'rgba(13,55,100,0.42)' }}>
             <strong>{session.user.email}</strong> is not authorised to use this app.
           </p>
           <button
             onClick={signOut}
-            className="text-[13px] font-mono transition-colors"
+            className="text-[13px] font-mono lowercase transition-colors"
             style={{ color: 'rgba(13,55,100,0.42)' }}
             onMouseEnter={e => e.target.style.color = '#E3492B'}
             onMouseLeave={e => e.target.style.color = 'rgba(13,55,100,0.42)'}
@@ -116,7 +116,7 @@ export default function App() {
         onNavigate={navigate}
         onSignOut={signOut}
       />
-      <main style={{ flex: 1, overflowY: 'auto', background: '#F5F7FA' }}>
+      <main style={{ flex: 1, overflowY: 'auto', background: '#F5F0E3' }}>
         {page === 'dashboard' && (
           <Dashboard members={members} onNavigate={navigate} />
         )}

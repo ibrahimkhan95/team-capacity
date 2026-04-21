@@ -20,8 +20,8 @@ export function Auth() {
 
   return (
     <div className="flex items-center justify-center min-h-screen w-full bg-bg">
-      <div className="bg-sur border rounded-2xl p-10 w-full max-w-sm"
-        style={{ borderColor: 'rgba(13,55,100,0.10)', boxShadow: '0 8px 32px rgba(13,55,100,0.12)' }}>
+      <div className="bg-sur border-2 p-10 w-full max-w-sm"
+        style={{ borderColor: '#0D3764', boxShadow: '4px 4px 0px #0D3764' }}>
 
         <div className="flex items-center gap-3 mb-8">
           <img
@@ -49,11 +49,13 @@ export function Auth() {
         <button
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-3 border rounded-lg py-2.5 text-sm font-mono transition-opacity hover:opacity-80 disabled:opacity-50"
-          style={{ borderColor: 'rgba(13,55,100,0.15)', color: '#0D3764' }}
+          className="w-full flex items-center justify-center gap-3 border-2 py-2.5 text-sm font-mono lowercase disabled:opacity-50 transition-all"
+          style={{ borderColor: '#0D3764', color: '#0D3764' }}
+          onMouseEnter={e => e.currentTarget.style.boxShadow = '4px 4px 0px #0D3764'}
+          onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
         >
           <GoogleIcon />
-          {loading ? 'redirecting…' : 'sign in with Google'}
+          {loading ? 'redirecting…' : 'sign in with google'}
         </button>
       </div>
     </div>

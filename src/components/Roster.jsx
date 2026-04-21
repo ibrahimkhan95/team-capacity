@@ -8,7 +8,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
   const [filter, setFilter]   = useState('all')
   const [search, setSearch]   = useState('')
   const [expanded, setExpanded] = useState(new Set())
-  const [editMember, setEditMember] = useState(null)   // null = closed, false = add new, obj = edit
+  const [editMember, setEditMember] = useState(null)
   const [showModal, setShowModal] = useState(false)
 
   function toggleExpand(id, e) {
@@ -36,7 +36,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
     <div className="p-8 max-w-[1060px]">
       {/* Back */}
       <button onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-[13px] font-mono mb-5 transition-colors"
+        className="inline-flex items-center gap-1.5 text-[13px] font-mono mb-5 transition-colors lowercase"
         style={{ color: 'rgba(13,55,100,0.42)' }}
         onMouseEnter={e => e.currentTarget.style.color = '#0D3764'}
         onMouseLeave={e => e.currentTarget.style.color = 'rgba(13,55,100,0.42)'}>
@@ -62,10 +62,10 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="search members..."
-            className="w-full rounded-lg pl-8 pr-3 py-2 text-sm font-mono text-nb outline-none transition-colors"
-            style={{ background: '#FFFFFF', border: '1px solid rgba(13,55,100,0.10)' }}
+            className="w-full pl-8 pr-3 py-2 text-sm font-mono text-nb outline-none transition-colors border-2"
+            style={{ background: '#FFFFFF', borderColor: '#0D3764' }}
             onFocus={e => e.target.style.borderColor = '#E3492B'}
-            onBlur={e => e.target.style.borderColor = 'rgba(13,55,100,0.10)'}
+            onBlur={e => e.target.style.borderColor = '#0D3764'}
           />
         </div>
 
@@ -73,34 +73,39 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
         <div className="flex gap-1.5">
           {[['all','all'],['On Project','on project'],['Bench','bench']].map(([val, label]) => (
             <button key={val} onClick={() => setFilter(val)}
-              className="text-[13px] font-mono px-3 py-1.5 rounded-lg border cursor-pointer transition-all"
+              className="text-[13px] font-mono px-3 py-1.5 border-2 cursor-pointer transition-all lowercase"
               style={filter === val
-                ? { background: 'rgba(227,73,43,0.10)', borderColor: 'rgba(227,73,43,0.25)', color: '#E3492B' }
-                : { background: 'transparent', borderColor: 'rgba(13,55,100,0.10)', color: 'rgba(13,55,100,0.42)' }}>
+                ? { background: '#E3492B', borderColor: '#0D3764', color: '#FFFFFF', boxShadow: '2px 2px 0px #0D3764' }
+                : { background: 'transparent', borderColor: '#0D3764', color: 'rgba(13,55,100,0.55)' }}
+              onMouseEnter={e => { if (filter !== val) e.currentTarget.style.boxShadow = '2px 2px 0px #0D3764' }}
+              onMouseLeave={e => { if (filter !== val) e.currentTarget.style.boxShadow = 'none' }}>
               {label}
             </button>
           ))}
         </div>
 
         <button onClick={openAdd}
-          className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium font-mono px-4 py-2 rounded-lg bg-no text-white cursor-pointer transition-opacity hover:opacity-90">
+          className="ml-auto inline-flex items-center gap-1.5 text-sm font-mono px-4 py-2 border-2 bg-no text-white cursor-pointer transition-all lowercase"
+          style={{ borderColor: '#0D3764' }}
+          onMouseEnter={e => e.currentTarget.style.boxShadow = '4px 4px 0px #0D3764'}
+          onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
           <Plus size={13} strokeWidth={2} />
           add member
         </button>
       </div>
 
       {/* Table */}
-      <div className="bg-sur border rounded-xl overflow-hidden"
-        style={{ borderColor: 'rgba(13,55,100,0.10)', boxShadow: '0 1px 3px rgba(13,55,100,0.08)' }}>
+      <div className="bg-sur border-2 overflow-hidden"
+        style={{ borderColor: '#0D3764', boxShadow: '4px 4px 0px #F8A978' }}>
         <table className="w-full border-collapse">
           <thead>
             <tr>
               <th className="th" style={{ width: 32 }}></th>
-              <th className="th">Name</th>
-              <th className="th">Seniority</th>
-              <th className="th">Status</th>
-              <th className="th">Projects</th>
-              <th className="th">Total allocation</th>
+              <th className="th">name</th>
+              <th className="th">seniority</th>
+              <th className="th">status</th>
+              <th className="th">projects</th>
+              <th className="th">total allocation</th>
               <th className="th"></th>
             </tr>
           </thead>
@@ -148,14 +153,14 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
               const assignRows = isExp ? (m.assignments || []).map((a, idx) => {
                 const dot = PROJECT_COLORS[idx % PROJECT_COLORS.length]
                 return (
-                  <tr key={`a-${m.id}-${idx}`} className="border-b" style={{ background: '#FAFBFD', borderColor: 'rgba(13,55,100,0.05)' }}>
+                  <tr key={`a-${m.id}-${idx}`} className="border-b" style={{ background: '#F5F0E3', borderColor: 'rgba(13,55,100,0.05)' }}>
                     <td></td>
                     <td colSpan={2} className="py-2 pl-10 text-[13px] font-mono" style={{ color: 'rgba(13,55,100,0.42)' }}>
-                      <span className="inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle" style={{ background: dot }} />
+                      <span className="inline-block w-1.5 h-1.5 mr-1.5 align-middle" style={{ background: dot }} />
                       {a.project}
                     </td>
                     <td className="py-2 text-[13px] font-mono" style={{ color: 'rgba(13,55,100,0.42)' }}>
-                      <span className="inline-flex items-center font-mono text-[12px] font-medium px-2 py-[2px] rounded-full"
+                      <span className="inline-flex items-center font-mono text-[12px] font-medium px-2 py-[2px]"
                         style={{ background: 'rgba(13,55,100,0.05)', color: 'rgba(13,55,100,0.42)' }}>
                         {a.engagement}
                       </span>
@@ -165,8 +170,8 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
                     </td>
                     <td colSpan={2} className="py-2">
                       <div className="flex items-center gap-2">
-                        <div className="w-[52px] h-1 rounded-full overflow-hidden" style={{ background: 'rgba(13,55,100,0.10)' }}>
-                          <div className="h-full rounded-full" style={{ width: `${a.pct}%`, background: dot }} />
+                        <div className="w-[52px] h-2 overflow-hidden" style={{ background: 'rgba(13,55,100,0.10)' }}>
+                          <div className="h-full" style={{ width: `${a.pct}%`, background: dot }} />
                         </div>
                         <span className="text-[12px] font-medium font-mono" style={{ color: dot }}>{a.pct}%</span>
                       </div>
@@ -192,7 +197,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
       )}
 
       <style>{`
-        .th { font-size:11px; font-weight:500; color:rgba(13,55,100,0.42); text-transform:uppercase; letter-spacing:0.09em; padding:0.75rem 1rem; text-align:left; border-bottom:1px solid rgba(13,55,100,0.10); background:rgba(13,55,100,0.05); font-family:'Roboto Mono',monospace; }
+        .th { font-size:11px; font-weight:500; color:rgba(13,55,100,0.42); letter-spacing:0.09em; padding:0.75rem 1rem; text-align:left; border-bottom:1px solid rgba(13,55,100,0.10); background:rgba(13,55,100,0.05); font-family:'Roboto Mono',monospace; }
         .td { padding:0.85rem 1rem; font-size:14px; color:#0D3764; vertical-align:middle; font-family:'Roboto Mono',monospace; }
       `}</style>
     </div>

@@ -17,7 +17,6 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
   const [saving, setSaving] = useState(false)
   const [visible, setVisible] = useState(false)
 
-  // Animate in on mount
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true))
   }, [])
@@ -121,9 +120,8 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
       <div
         className="relative flex flex-col bg-sur h-full w-[460px] transition-transform duration-250"
         style={{
-          boxShadow: '-8px 0 32px rgba(13,55,100,0.14)',
+          borderLeft: '2px solid #0D3764',
           transform: visible ? 'translateX(0)' : 'translateX(100%)',
-          borderLeft: '1px solid rgba(13,55,100,0.10)',
         }}
       >
         {/* Header */}
@@ -131,13 +129,13 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
           style={{ borderBottom: '1px solid rgba(13,55,100,0.10)', background: 'rgba(13,55,100,0.03)' }}>
           <div>
             <h2 className="font-serif text-[20px] font-normal text-nb leading-none">
-              {isNew ? 'Add member' : 'Edit member'}
+              {isNew ? 'add member' : 'edit member'}
             </h2>
-            <p className="text-[11px] font-mono mt-1" style={{ color: 'rgba(13,55,100,0.42)' }}>
+            <p className="text-[11px] font-mono mt-1 lowercase" style={{ color: 'rgba(13,55,100,0.42)' }}>
               {squad}
             </p>
           </div>
-          <button onClick={close} className="p-1.5 rounded-lg transition-colors"
+          <button onClick={close} className="p-1.5 transition-colors"
             style={{ color: 'rgba(13,55,100,0.42)' }}
             onMouseEnter={e => e.currentTarget.style.color = '#0D3764'}
             onMouseLeave={e => e.currentTarget.style.color = 'rgba(13,55,100,0.42)'}>
@@ -147,51 +145,51 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
-          <SectionLabel>Person details</SectionLabel>
+          <SectionLabel>person details</SectionLabel>
 
-          <FormGroup label="Full name">
+          <FormGroup label="full name">
             <input type="text" value={name} onChange={e => setName(e.target.value)}
               placeholder="e.g. Asad Jan Khattak" className={inputCls} style={inputStyle}
               onFocus={e => e.target.style.borderColor = '#E3492B'}
-              onBlur={e => e.target.style.borderColor = 'rgba(13,55,100,0.10)'} />
+              onBlur={e => e.target.style.borderColor = '#0D3764'} />
           </FormGroup>
 
           <div className="grid grid-cols-2 gap-4">
-            <FormGroup label="Seniority">
+            <FormGroup label="seniority">
               <select value={seniority} onChange={e => setSeniority(e.target.value)} className={inputCls} style={inputStyle}>
                 {['Junior','Mid','Senior','XDM'].map(s => <option key={s}>{s}</option>)}
               </select>
             </FormGroup>
-            <FormGroup label="Status">
+            <FormGroup label="status">
               <select value={status} onChange={e => setStatus(e.target.value)} className={inputCls} style={inputStyle}>
                 {['On Project','Bench','On Leave','Exiting'].map(s => <option key={s}>{s}</option>)}
               </select>
             </FormGroup>
           </div>
 
-          <FormGroup label="Notes">
+          <FormGroup label="notes">
             <textarea value={notes} onChange={e => setNotes(e.target.value)}
               placeholder="upcoming changes, flags, context..."
               rows={3} className={inputCls + ' resize-none'} style={inputStyle}
               onFocus={e => e.target.style.borderColor = '#E3492B'}
-              onBlur={e => e.target.style.borderColor = 'rgba(13,55,100,0.10)'} />
+              onBlur={e => e.target.style.borderColor = '#0D3764'} />
           </FormGroup>
 
           {/* Assignments */}
           <div>
             <div className={!showAssignments ? 'opacity-40' : undefined}>
-              <SectionLabel>Project assignments</SectionLabel>
+              <SectionLabel>project assignments</SectionLabel>
             </div>
 
             {showAssignments && (
               <div className="flex flex-col gap-3 mt-4">
                 {assignments.map((a, i) => (
-                  <div key={i} className="rounded-xl p-4"
-                    style={{ background: '#F5F7FA', border: '1px solid rgba(13,55,100,0.08)' }}>
+                  <div key={i} className="p-4 border-2"
+                    style={{ background: '#F5F0E3', borderColor: '#0D3764' }}>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[11px] font-medium font-mono uppercase tracking-wider"
+                      <span className="text-[11px] font-medium font-mono tracking-wider lowercase"
                         style={{ color: 'rgba(13,55,100,0.42)' }}>
-                        Assignment {i + 1}
+                        assignment {i + 1}
                       </span>
                       <button onClick={() => removeAssignment(i)}
                         className="text-lg font-mono leading-none transition-colors"
@@ -201,22 +199,22 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
                     </div>
 
                     <div className="flex flex-col gap-3">
-                      <FormGroup label="Project / initiative name">
+                      <FormGroup label="project / initiative name">
                         <input type="text" value={a.project}
                           onChange={e => updateAssignment(i, 'project', e.target.value)}
                           placeholder="e.g. Client Phoenix" className={inputCls} style={inputStyle}
                           onFocus={e => e.target.style.borderColor = '#E3492B'}
-                          onBlur={e => e.target.style.borderColor = 'rgba(13,55,100,0.10)'} />
+                          onBlur={e => e.target.style.borderColor = '#0D3764'} />
                       </FormGroup>
 
                       <div className="grid grid-cols-2 gap-3">
-                        <FormGroup label="Engagement">
+                        <FormGroup label="engagement">
                           <select value={a.engagement} onChange={e => updateAssignment(i, 'engagement', e.target.value)}
                             className={inputCls} style={inputStyle}>
                             {ENGAGEMENT_OPTIONS.map(o => <option key={o.label}>{o.label}</option>)}
                           </select>
                         </FormGroup>
-                        <FormGroup label="Start date">
+                        <FormGroup label="start date">
                           <input type="text"
                             value={a.start_date_input !== undefined ? a.start_date_input : (a.start_date ? formatDate(a.start_date) : '')}
                             onChange={e => {
@@ -230,26 +228,26 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
                             placeholder="DD/MM/YYYY"
                             className={inputCls} style={inputStyle}
                             onFocus={e => e.target.style.borderColor = '#E3492B'}
-                            onBlur={e => e.target.style.borderColor = 'rgba(13,55,100,0.10)'} />
+                            onBlur={e => e.target.style.borderColor = '#0D3764'} />
                         </FormGroup>
                       </div>
 
-                      <FormGroup label="Notes">
+                      <FormGroup label="notes">
                         <input type="text" value={a.notes || ''}
                           onChange={e => updateAssignment(i, 'notes', e.target.value)}
                           placeholder="optional" className={inputCls} style={inputStyle}
                           onFocus={e => e.target.style.borderColor = '#E3492B'}
-                          onBlur={e => e.target.style.borderColor = 'rgba(13,55,100,0.10)'} />
+                          onBlur={e => e.target.style.borderColor = '#0D3764'} />
                       </FormGroup>
                     </div>
                   </div>
                 ))}
 
                 <button onClick={addAssignment}
-                  className="flex items-center justify-center gap-1.5 text-[13px] font-mono w-full rounded-xl py-2.5 px-3 cursor-pointer transition-all"
-                  style={{ color: '#E3492B', background: 'rgba(227,73,43,0.04)', border: '1px dashed rgba(227,73,43,0.25)' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(227,73,43,0.09)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(227,73,43,0.04)'}>
+                  className="flex items-center justify-center gap-1.5 text-[13px] font-mono w-full py-2.5 px-3 border-2 cursor-pointer transition-all lowercase"
+                  style={{ color: '#E3492B', background: 'transparent', borderColor: '#E3492B' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(227,73,43,0.06)'; e.currentTarget.style.boxShadow = '4px 4px 0px #0D3764' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.boxShadow = 'none' }}>
                   <Plus size={13} strokeWidth={2} />
                   add project assignment
                 </button>
@@ -263,23 +261,26 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
           style={{ borderTop: '1px solid rgba(13,55,100,0.10)', background: 'rgba(13,55,100,0.02)' }}>
           {!isNew && (
             <button onClick={handleDelete} disabled={saving}
-              className="text-sm font-medium font-mono rounded-lg px-4 py-2.5 cursor-pointer transition-all"
-              style={{ background: 'rgba(227,73,43,0.05)', color: '#E3492B', border: '1px solid rgba(227,73,43,0.2)' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(227,73,43,0.10)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(227,73,43,0.05)'}>
+              className="text-sm font-medium font-mono px-4 py-2.5 border-2 cursor-pointer transition-all lowercase"
+              style={{ background: 'transparent', color: '#E3492B', borderColor: '#E3492B' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(227,73,43,0.06)'; e.currentTarget.style.boxShadow = '4px 4px 0px #0D3764' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.boxShadow = 'none' }}>
               remove
             </button>
           )}
           <div className="flex gap-2 ml-auto">
             <button onClick={close}
-              className="text-sm font-medium font-mono rounded-lg px-5 py-2.5 cursor-pointer transition-all"
-              style={{ background: 'transparent', color: 'rgba(13,55,100,0.42)', border: '1px solid rgba(13,55,100,0.18)' }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(13,55,100,0.28)'; e.currentTarget.style.color = '#0D3764' }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(13,55,100,0.18)'; e.currentTarget.style.color = 'rgba(13,55,100,0.42)' }}>
+              className="text-sm font-medium font-mono px-5 py-2.5 border-2 cursor-pointer transition-all lowercase"
+              style={{ background: 'transparent', color: 'rgba(13,55,100,0.55)', borderColor: '#0D3764' }}
+              onMouseEnter={e => { e.currentTarget.style.color = '#0D3764'; e.currentTarget.style.boxShadow = '4px 4px 0px #0D3764' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(13,55,100,0.55)'; e.currentTarget.style.boxShadow = 'none' }}>
               cancel
             </button>
             <button onClick={handleSave} disabled={saving}
-              className="text-sm font-medium font-mono rounded-lg px-5 py-2.5 cursor-pointer bg-no text-white transition-opacity hover:opacity-90 disabled:opacity-60">
+              className="text-sm font-medium font-mono px-5 py-2.5 border-2 cursor-pointer bg-no text-white transition-all disabled:opacity-60 lowercase"
+              style={{ borderColor: '#0D3764' }}
+              onMouseEnter={e => { if (!saving) e.currentTarget.style.boxShadow = '4px 4px 0px #0D3764' }}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
               {saving ? 'saving…' : 'save changes'}
             </button>
           </div>
@@ -291,7 +292,7 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
 
 function SectionLabel({ children }) {
   return (
-    <div className="text-[11px] font-medium uppercase tracking-[0.10em] font-mono pb-2"
+    <div className="text-[11px] font-medium tracking-[0.10em] font-mono pb-2 lowercase"
       style={{ color: 'rgba(13,55,100,0.42)', borderBottom: '1px solid rgba(13,55,100,0.10)' }}>
       {children}
     </div>
@@ -301,12 +302,12 @@ function SectionLabel({ children }) {
 function FormGroup({ label, children, className = '' }) {
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
-      <label className="text-[11px] font-medium uppercase tracking-[0.09em] font-mono"
+      <label className="text-[11px] font-medium tracking-[0.09em] font-mono lowercase"
         style={{ color: 'rgba(13,55,100,0.42)' }}>{label}</label>
       {children}
     </div>
   )
 }
 
-const inputCls = 'bg-bg border rounded-lg px-3 py-2 text-nb font-mono text-sm outline-none transition-colors w-full'
-const inputStyle = { borderColor: 'rgba(13,55,100,0.10)', background: '#FFFFFF' }
+const inputCls = 'border-2 px-3 py-2 text-nb font-mono text-sm outline-none transition-colors w-full'
+const inputStyle = { borderColor: '#0D3764', background: '#FFFFFF' }
