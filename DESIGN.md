@@ -38,7 +38,7 @@ Nurture is the product design and research lab at Arbisoft. Warm, human, and app
 
 - **Headings**: DM Serif Display, 400 (regular italic available for emphasis), 32–64px, tracking normal
 - **Body / Paragraph**: Roboto Mono, 400, 14–16px, leading relaxed
-- **Labels / Captions**: Roboto Mono, 400, 11–13px, uppercase tracking-wide
+- **Labels / Captions**: Roboto Mono, 400, 12–14px, uppercase tracking-wide
 - **Nav links**: Roboto Mono, 400, 14px, lowercase
 
 ### Tone rules

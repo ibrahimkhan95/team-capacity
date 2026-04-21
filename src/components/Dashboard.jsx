@@ -100,10 +100,10 @@ export function Dashboard({ members, onNavigate }) {
 function Tooltip({ text }) {
   return (
     <div className="relative group inline-flex items-center ml-1">
-      <Info size={11} strokeWidth={1.5} style={{ color: 'rgba(13,55,100,0.50)', cursor: 'default' }} />
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 pointer-events-none
+      <Info size={14} strokeWidth={1.5} style={{ color: 'rgba(13,55,100,0.50)', cursor: 'default' }} />
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 pointer-events-none
                       opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
-        <div className="px-3 py-2 text-[11px] font-mono leading-relaxed border-2"
+        <div className="px-3 py-2.5 text-[14px] font-mono leading-relaxed border-2"
           style={{ background: '#0D3764', color: 'rgba(255,255,255,0.88)', borderColor: '#0D3764', boxShadow: '4px 4px 0px #F8A978' }}>
           {text}
         </div>
