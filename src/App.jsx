@@ -53,7 +53,7 @@ export default function App() {
   if (!authChecked) {
     return (
       <div className="flex items-center justify-center min-h-screen w-full bg-bg">
-        <div className="text-xs font-mono" style={{ color: 'rgba(13,55,100,0.42)' }}>loading…</div>
+        <div className="text-xs font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>loading…</div>
       </div>
     )
   }
@@ -81,21 +81,21 @@ export default function App() {
             />
             <div className="text-left">
               <div className="font-serif text-nb text-lg leading-none">nurture</div>
-              <div className="text-[10px] mt-0.5 font-mono tracking-wider" style={{ color: 'rgba(13,55,100,0.42)' }}>
+              <div className="text-[10px] mt-0.5 font-mono tracking-wider" style={{ color: 'rgba(13,55,100,0.60)' }}>
                 squad capacity
               </div>
             </div>
           </div>
           <p className="font-serif text-nb text-base mb-2">access restricted</p>
-          <p className="text-[13px] font-mono mb-6" style={{ color: 'rgba(13,55,100,0.42)' }}>
+          <p className="text-[13px] font-mono mb-6" style={{ color: 'rgba(13,55,100,0.60)' }}>
             <strong>{session.user.email}</strong> is not authorised to use this app.
           </p>
           <button
             onClick={signOut}
             className="text-[13px] font-mono lowercase transition-colors"
-            style={{ color: 'rgba(13,55,100,0.42)' }}
+            style={{ color: 'rgba(13,55,100,0.60)' }}
             onMouseEnter={e => e.target.style.color = '#E3492B'}
-            onMouseLeave={e => e.target.style.color = 'rgba(13,55,100,0.42)'}
+            onMouseLeave={e => e.target.style.color = 'rgba(13,55,100,0.60)'}
           >
             sign out
           </button>

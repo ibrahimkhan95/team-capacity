@@ -37,9 +37,9 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
       {/* Back */}
       <button onClick={onBack}
         className="inline-flex items-center gap-1.5 text-[13px] font-mono mb-5 transition-colors lowercase"
-        style={{ color: 'rgba(13,55,100,0.42)' }}
+        style={{ color: 'rgba(13,55,100,0.60)' }}
         onMouseEnter={e => e.currentTarget.style.color = '#0D3764'}
-        onMouseLeave={e => e.currentTarget.style.color = 'rgba(13,55,100,0.42)'}>
+        onMouseLeave={e => e.currentTarget.style.color = 'rgba(13,55,100,0.60)'}>
         <ChevronLeft size={14} strokeWidth={1.5} />
         back to dashboard
       </button>
@@ -47,7 +47,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
       {/* Header */}
       <div className="mb-7">
         <h1 className="font-serif text-[28px] font-normal text-nb leading-tight">{squadName}</h1>
-        <p className="text-[12px] mt-1 tracking-wider font-mono" style={{ color: 'rgba(13,55,100,0.42)' }}>
+        <p className="text-[12px] mt-1 tracking-wider font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>
           {members.length} members · tap a row to edit · expand to see assignments
         </p>
       </div>
@@ -56,7 +56,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
       <div className="flex items-center gap-3 mb-5 flex-wrap">
         {/* Search */}
         <div className="relative flex-1 max-w-[260px]">
-          <Search size={13} strokeWidth={1.5} className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgba(13,55,100,0.42)' }} />
+          <Search size={13} strokeWidth={1.5} className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgba(13,55,100,0.60)' }} />
           <input
             type="text"
             value={search}
@@ -112,7 +112,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
           <tbody>
             {!filtered.length ? (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-sm font-mono" style={{ color: 'rgba(13,55,100,0.42)' }}>
+                <td colSpan={7} className="text-center py-12 text-sm font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>
                   no members found
                 </td>
               </tr>
@@ -134,7 +134,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
                       <button
                         onClick={e => toggleExpand(m.id, e)}
                         className="flex items-center transition-transform duration-150"
-                        style={{ color: 'rgba(13,55,100,0.42)', transform: isExp ? 'rotate(90deg)' : 'none' }}>
+                        style={{ color: 'rgba(13,55,100,0.60)', transform: isExp ? 'rotate(90deg)' : 'none' }}>
                         <ChevronRight size={13} strokeWidth={2} />
                       </button>
                     )}
@@ -142,10 +142,10 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
                   <td className="td font-medium text-nb">{m.name}</td>
                   <td className="td"><SeniorityPill seniority={m.seniority} /></td>
                   <td className="td"><StatusPill status={m.status} /></td>
-                  <td className="td text-[13px]" style={{ color: 'rgba(13,55,100,0.42)' }}>{projectNames}</td>
+                  <td className="td text-[13px]" style={{ color: 'rgba(13,55,100,0.60)' }}>{projectNames}</td>
                   <td className="td"><AllocPill pct={alloc} isBench={m.status === 'Bench'} /></td>
                   <td className="td">
-                    <MoveRight size={13} strokeWidth={1.5} style={{ color: 'rgba(13,55,100,0.3)' }} />
+                    <MoveRight size={13} strokeWidth={1.5} style={{ color: 'rgba(13,55,100,0.50)' }} />
                   </td>
                 </tr>
               )
@@ -153,19 +153,19 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
               const assignRows = isExp ? (m.assignments || []).map((a, idx) => {
                 const dot = PROJECT_COLORS[idx % PROJECT_COLORS.length]
                 return (
-                  <tr key={`a-${m.id}-${idx}`} className="border-b" style={{ background: '#F5F0E3', borderColor: 'rgba(13,55,100,0.05)' }}>
+                  <tr key={`a-${m.id}-${idx}`} className="border-b" style={{ background: '#E8E8E8', borderColor: 'rgba(13,55,100,0.08)' }}>
                     <td></td>
-                    <td colSpan={2} className="py-2 pl-10 text-[13px] font-mono" style={{ color: 'rgba(13,55,100,0.42)' }}>
+                    <td colSpan={2} className="py-2 pl-10 text-[13px] font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>
                       <span className="inline-block w-1.5 h-1.5 mr-1.5 align-middle" style={{ background: dot }} />
                       {a.project}
                     </td>
-                    <td className="py-2 text-[13px] font-mono" style={{ color: 'rgba(13,55,100,0.42)' }}>
+                    <td className="py-2 text-[13px] font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>
                       <span className="inline-flex items-center font-mono text-[12px] font-medium px-2 py-[2px]"
-                        style={{ background: 'rgba(13,55,100,0.05)', color: 'rgba(13,55,100,0.42)' }}>
+                        style={{ background: 'rgba(13,55,100,0.05)', color: 'rgba(13,55,100,0.60)' }}>
                         {a.engagement}
                       </span>
                     </td>
-                    <td className="py-2 text-[13px] font-mono" style={{ color: 'rgba(13,55,100,0.42)' }}>
+                    <td className="py-2 text-[13px] font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>
                       since {formatDate(a.start_date)}
                     </td>
                     <td colSpan={2} className="py-2">
@@ -197,7 +197,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
       )}
 
       <style>{`
-        .th { font-size:11px; font-weight:500; color:rgba(13,55,100,0.42); letter-spacing:0.09em; padding:0.75rem 1rem; text-align:left; border-bottom:1px solid rgba(13,55,100,0.10); background:rgba(13,55,100,0.05); font-family:'Roboto Mono',monospace; }
+        .th { font-size:11px; font-weight:500; color:rgba(13,55,100,0.60); letter-spacing:0.09em; padding:0.75rem 1rem; text-align:left; border-bottom:1px solid rgba(13,55,100,0.10); background:rgba(13,55,100,0.05); font-family:'Roboto Mono',monospace; }
         .td { padding:0.85rem 1rem; font-size:14px; color:#0D3764; vertical-align:middle; font-family:'Roboto Mono',monospace; }
       `}</style>
     </div>

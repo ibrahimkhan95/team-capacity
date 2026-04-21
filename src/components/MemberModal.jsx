@@ -131,14 +131,14 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
             <h2 className="font-serif text-[20px] font-normal text-nb leading-none">
               {isNew ? 'add member' : 'edit member'}
             </h2>
-            <p className="text-[11px] font-mono mt-1 lowercase" style={{ color: 'rgba(13,55,100,0.42)' }}>
+            <p className="text-[11px] font-mono mt-1 lowercase" style={{ color: 'rgba(13,55,100,0.60)' }}>
               {squad}
             </p>
           </div>
           <button onClick={close} className="p-1.5 transition-colors"
-            style={{ color: 'rgba(13,55,100,0.42)' }}
+            style={{ color: 'rgba(13,55,100,0.60)' }}
             onMouseEnter={e => e.currentTarget.style.color = '#0D3764'}
-            onMouseLeave={e => e.currentTarget.style.color = 'rgba(13,55,100,0.42)'}>
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(13,55,100,0.60)'}>
             <X size={15} strokeWidth={1.5} />
           </button>
         </div>
@@ -188,14 +188,14 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
                     style={{ background: '#F5F0E3', borderColor: '#0D3764' }}>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-[11px] font-medium font-mono tracking-wider lowercase"
-                        style={{ color: 'rgba(13,55,100,0.42)' }}>
+                        style={{ color: 'rgba(13,55,100,0.60)' }}>
                         assignment {i + 1}
                       </span>
                       <button onClick={() => removeAssignment(i)}
                         className="text-lg font-mono leading-none transition-colors"
-                        style={{ color: 'rgba(13,55,100,0.30)' }}
+                        style={{ color: 'rgba(13,55,100,0.50)' }}
                         onMouseEnter={e => e.target.style.color = '#E3492B'}
-                        onMouseLeave={e => e.target.style.color = 'rgba(13,55,100,0.30)'}>×</button>
+                        onMouseLeave={e => e.target.style.color = 'rgba(13,55,100,0.50)'}>×</button>
                     </div>
 
                     <div className="flex flex-col gap-3">
@@ -293,7 +293,7 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
 function SectionLabel({ children }) {
   return (
     <div className="text-[11px] font-medium tracking-[0.10em] font-mono pb-2 lowercase"
-      style={{ color: 'rgba(13,55,100,0.42)', borderBottom: '1px solid rgba(13,55,100,0.10)' }}>
+      style={{ color: 'rgba(13,55,100,0.60)', borderBottom: '1px solid rgba(13,55,100,0.10)' }}>
       {children}
     </div>
   )
@@ -303,7 +303,7 @@ function FormGroup({ label, children, className = '' }) {
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
       <label className="text-[11px] font-medium tracking-[0.09em] font-mono lowercase"
-        style={{ color: 'rgba(13,55,100,0.42)' }}>{label}</label>
+        style={{ color: 'rgba(13,55,100,0.60)' }}>{label}</label>
       {children}
     </div>
   )

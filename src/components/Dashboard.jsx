@@ -13,7 +13,7 @@ export function Dashboard({ members, onNavigate }) {
       {/* Page header */}
       <div className="mb-7">
         <h1 className="font-serif text-[28px] font-normal text-nb leading-tight">Overview</h1>
-        <p className="text-[12px] mt-1 tracking-wider font-mono" style={{ color: 'rgba(13,55,100,0.42)' }}>
+        <p className="text-[12px] mt-1 tracking-wider font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>
           all squads · live capacity summary
         </p>
       </div>
@@ -66,22 +66,22 @@ export function Dashboard({ members, onNavigate }) {
               <div className="h-1" style={{ background: ac }} />
               <div className="px-7 py-6" style={{ borderBottom: '1px solid rgba(13,55,100,0.10)' }}>
                 <h3 className="font-serif text-[22px] font-normal text-nb">{name}</h3>
-                <small className="text-[12px] font-mono mt-1 block" style={{ color: 'rgba(13,55,100,0.42)' }}>
+                <small className="text-[12px] font-mono mt-1 block" style={{ color: 'rgba(13,55,100,0.60)' }}>
                   {squadMembers.length} members
                 </small>
               </div>
               <div className="px-7 py-6 grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-[11px] tracking-[0.08em] font-mono mb-2 lowercase" style={{ color: 'rgba(13,55,100,0.42)' }}>on project</div>
+                  <div className="text-[11px] tracking-[0.08em] font-mono mb-2 lowercase" style={{ color: 'rgba(13,55,100,0.60)' }}>on project</div>
                   <div className="text-[36px] font-medium leading-none" style={{ color: '#1B998B' }}>{sp.length}</div>
                 </div>
                 <div>
-                  <div className="text-[11px] tracking-[0.08em] font-mono mb-2 lowercase" style={{ color: 'rgba(13,55,100,0.42)' }}>bench</div>
+                  <div className="text-[11px] tracking-[0.08em] font-mono mb-2 lowercase" style={{ color: 'rgba(13,55,100,0.60)' }}>bench</div>
                   <div className="text-[36px] font-medium leading-none" style={{ color: '#0A5950' }}>{sb.length}</div>
                 </div>
               </div>
               <div className="px-7 py-5" style={{ borderTop: '1px solid rgba(13,55,100,0.10)', background: 'rgba(13,55,100,0.03)' }}>
-                <div className="flex justify-between text-[12px] font-mono mb-2" style={{ color: 'rgba(13,55,100,0.42)' }}>
+                <div className="flex justify-between text-[12px] font-mono mb-2" style={{ color: 'rgba(13,55,100,0.60)' }}>
                   <span>avg allocation · on project</span>
                   <span className="font-medium" style={{ color: bc }}>{avgA}%</span>
                 </div>
@@ -100,7 +100,7 @@ export function Dashboard({ members, onNavigate }) {
 function Tooltip({ text }) {
   return (
     <div className="relative group inline-flex items-center ml-1">
-      <Info size={11} strokeWidth={1.5} style={{ color: 'rgba(13,55,100,0.28)', cursor: 'default' }} />
+      <Info size={11} strokeWidth={1.5} style={{ color: 'rgba(13,55,100,0.50)', cursor: 'default' }} />
       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 pointer-events-none
                       opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
         <div className="px-3 py-2 text-[11px] font-mono leading-relaxed border-2"
@@ -117,14 +117,14 @@ function SummaryCard({ label, tooltip, value, sub, valueColor, icon, iconBg }) {
   return (
     <div className="bg-sur border-2 p-7" style={{ borderColor: '#0D3764' }}>
       <div className="flex items-center justify-between mb-5">
-        <span className="inline-flex items-center text-[11px] tracking-[0.12em] font-mono lowercase" style={{ color: 'rgba(13,55,100,0.42)' }}>
+        <span className="inline-flex items-center text-[11px] tracking-[0.12em] font-mono lowercase" style={{ color: 'rgba(13,55,100,0.60)' }}>
           {label}
           {tooltip && <Tooltip text={tooltip} />}
         </span>
         <div className="w-9 h-9 flex items-center justify-center" style={{ background: iconBg }}>{icon}</div>
       </div>
       <div className="text-[44px] font-medium leading-none tracking-tight" style={{ color: valueColor }}>{value}</div>
-      <div className="text-[12px] mt-3 font-mono" style={{ color: 'rgba(13,55,100,0.42)' }}>{sub}</div>
+      <div className="text-[12px] mt-3 font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>{sub}</div>
     </div>
   )
 }

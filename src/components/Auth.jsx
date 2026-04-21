@@ -31,14 +31,14 @@ export function Auth() {
           />
           <div>
             <div className="font-serif text-nb text-lg leading-none">nurture</div>
-            <div className="text-[10px] mt-0.5 font-mono tracking-wider" style={{ color: 'rgba(13,55,100,0.42)' }}>
+            <div className="text-[10px] mt-0.5 font-mono tracking-wider" style={{ color: 'rgba(13,55,100,0.60)' }}>
               squad capacity
             </div>
           </div>
         </div>
 
         <p className="font-serif text-nb text-base mb-1">Sign in</p>
-        <p className="text-[13px] font-mono mb-6" style={{ color: 'rgba(13,55,100,0.42)' }}>
+        <p className="text-[13px] font-mono mb-6" style={{ color: 'rgba(13,55,100,0.60)' }}>
           Use your Arbisoft Google account to continue.
         </p>
 

@@ -46,6 +46,11 @@ Nurture is the product design and research lab at Arbisoft. Warm, human, and app
 - Headings may mix roman and italic within a phrase for emphasis
 - DON'T use Roboto Mono bold for body text — weight contrast comes from DM Serif, not from bold mono
 
+### Muted / secondary text
+- Use `rgba(13,55,100,0.60)` for secondary/muted text on light backgrounds — minimum for accessibility
+- Use `rgba(13,55,100,0.50)` for very subtle UI chrome (icons, decorative indicators) — not for readable text
+- DON'T go below `0.50` opacity for any text or interactive icon
+
 ---
 
 ## Spacing
@@ -80,7 +85,8 @@ Section padding (top/bottom): `4xl` (96px) on desktop, `3xl` (64px) on mobile.
 - Border: 2px solid `brand-navy`
 - Border radius: 0px
 - Background: white or eggshell
-- Hover: background shifts to light-gray, offset shadow appears (4px 4px 0px `brand-navy`)
+- Hover: background shifts to light-gray (`#F4F4F4`), offset shadow appears (4px 4px 0px `brand-navy`) — shadow on hover only, not resting state
+- Nested/expanded rows: use `#E8E8E8` to distinguish from the parent white surface
 - Label text (e.g. "problem discovery"): Roboto Mono, 12px, lowercase, right-aligned
 - Client name: DM Serif Display or Roboto Mono bold, left-aligned
 
@@ -97,7 +103,8 @@ Section padding (top/bottom): `4xl` (96px) on desktop, `3xl` (64px) on mobile.
 
 - DO use 0px border radius consistently across all interactive elements
 - DO keep strokes at 2px — not 1px, not 3px
-- DO use offset shadows (4–8px) for hover states and icon depth — this is the brutalist signature
+- DO use offset shadows (4–8px) for hover/press states and icon depth — this is the brutalist signature
+- DON'T show offset shadows on cards or buttons in their resting state — hover/press only
 - DO write UI copy in lowercase (nav, labels, buttons, tags)
 - DO use DM Serif Display for any headline that needs warmth or personality
 - DO use Roboto Mono for all functional/UI text — including body copy
