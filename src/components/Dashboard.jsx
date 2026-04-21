@@ -9,7 +9,7 @@ export function Dashboard({ members, onNavigate }) {
   const avgAlloc = allocs.length ? Math.round(allocs.reduce((s, v) => s + v, 0) / allocs.length) : 0
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* Page header */}
       <div className="mb-7">
         <h1 className="font-serif text-[28px] font-normal text-nb leading-tight">Overview</h1>
@@ -19,7 +19,7 @@ export function Dashboard({ members, onNavigate }) {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
         <SummaryCard
           label="total members" value={members.length} sub="across 3 squads"
           tooltip="Everyone in all squads, regardless of status."
@@ -45,7 +45,7 @@ export function Dashboard({ members, onNavigate }) {
 
       {/* Squad cards */}
       <h2 className="font-serif text-lg font-normal text-nb mb-4">Squads</h2>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
         {SQUAD_NAMES.map(name => {
           const squadMembers = members.filter(m => m.squad === name)
           const sp = squadMembers.filter(m => m.status === 'On Project')

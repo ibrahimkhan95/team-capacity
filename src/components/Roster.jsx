@@ -33,7 +33,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
   })
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* Back */}
       <button onClick={onBack}
         className="inline-flex items-center gap-1.5 text-[13px] font-mono mb-5 transition-colors lowercase"
@@ -95,7 +95,8 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
       </div>
 
       {/* Table */}
-      <div className="bg-sur border-2 overflow-hidden"
+      <div className="overflow-x-auto">
+      <div className="bg-sur border-2 overflow-hidden min-w-[640px]"
         style={{ borderColor: '#0D3764' }}>
         <table className="w-full border-collapse">
           <thead>
@@ -185,6 +186,8 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
           </tbody>
         </table>
       </div>
+
+      </div>{/* end overflow-x-auto */}
 
       {/* Modal */}
       {showModal && (

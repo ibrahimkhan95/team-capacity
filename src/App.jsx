@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Menu } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { Auth } from './components/Auth'
 import { Sidebar } from './components/Sidebar'
@@ -13,6 +14,7 @@ export default function App() {
   const [members, setMembers] = useState([])
   const [page, setPage] = useState('dashboard')
   const [currentSquad, setCurrentSquad] = useState(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Auth
   useEffect(() => {
@@ -109,14 +111,28 @@ export default function App() {
     : []
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
+    <div className="flex min-h-screen w-full">
       <Sidebar
         currentPage={page}
         currentSquad={currentSquad}
         onNavigate={navigate}
         onSignOut={signOut}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
-      <main style={{ flex: 1, overflowY: 'auto', background: '#F4F4F4' }}>
+      <main className="flex-1 overflow-y-auto" style={{ background: '#F4F4F4' }}>
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center px-4 py-3 border-b-2" style={{ borderColor: '#0D3764', background: '#FFFFFF' }}>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-1 mr-3 transition-colors"
+            style={{ color: '#0D3764' }}
+          >
+            <Menu size={20} strokeWidth={1.5} />
+          </button>
+          <div className="font-serif text-nb text-base">nurture</div>
+        </div>
+
         {page === 'dashboard' && (
           <Dashboard members={members} onNavigate={navigate} />
         )}

@@ -118,7 +118,7 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
 
       {/* Drawer */}
       <div
-        className="relative flex flex-col bg-sur h-full w-[460px] transition-transform duration-250"
+        className="relative flex flex-col bg-sur h-full w-full md:w-[460px] transition-transform duration-250"
         style={{
           borderLeft: '2px solid #0D3764',
           transform: visible ? 'translateX(0)' : 'translateX(100%)',
