@@ -33,7 +33,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
   })
 
   return (
-    <div className="p-8 max-w-[1060px]">
+    <div className="p-8">
       {/* Back */}
       <button onClick={onBack}
         className="inline-flex items-center gap-1.5 text-[13px] font-mono mb-5 transition-colors lowercase"

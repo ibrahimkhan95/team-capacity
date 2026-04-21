@@ -9,7 +9,7 @@ export function Dashboard({ members, onNavigate }) {
   const avgAlloc = allocs.length ? Math.round(allocs.reduce((s, v) => s + v, 0) / allocs.length) : 0
 
   return (
-    <div className="p-8 max-w-[1060px]">
+    <div className="p-8">
       {/* Page header */}
       <div className="mb-7">
         <h1 className="font-serif text-[28px] font-normal text-nb leading-tight">Overview</h1>
