@@ -13,7 +13,7 @@ Nurture is the product design and research lab at Arbisoft. Warm, human, and app
 - **brand-green** (`#1B998B`): secondary accent, links, success states
 - **brand-navy** (`#0D3764`): headings, body text, icon strokes, dark backgrounds
 - **eggshell** (`#F5F0E3`): warm off-white surface, card backgrounds, page sections
-- **light-gray** (`#F4F4F4`): neutral surface, icon background (empty/default state)
+- **light-gray** (`#F4F4F4`): neutral surface, icon background (empty/default state), main app background
 
 ### Pastels
 - **baby-purple** (`#DBCDF0`): section backgrounds, tag fills, decorative
@@ -30,7 +30,7 @@ Nurture is the product design and research lab at Arbisoft. Warm, human, and app
 - Inverted mode: pastel on solid background (baby-cyan on navy, salmon on brand-green, etc.)
 - DON'T pair two pastels together — contrast is insufficient for text
 - DON'T pair brand-orange and hot-pink in the same component
-- Light-gray (`#F4F4F4`) is for neutral/empty states only — not a section background color
+- Light-gray (`#F4F4F4`) is for neutral/empty states and the main app background — not a section background color
 
 ---
 

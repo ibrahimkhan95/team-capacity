@@ -116,7 +116,7 @@ export default function App() {
         onNavigate={navigate}
         onSignOut={signOut}
       />
-      <main style={{ flex: 1, overflowY: 'auto', background: '#F5F0E3' }}>
+      <main style={{ flex: 1, overflowY: 'auto', background: '#F4F4F4' }}>
         {page === 'dashboard' && (
           <Dashboard members={members} onNavigate={navigate} />
         )}
