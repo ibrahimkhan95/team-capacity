@@ -156,10 +156,21 @@ function ProjectDrawer({ project, session, onClose, onSaved }) {
 
   const [name, setName]   = useState(project?.name || '')
   const [tier, setTier]   = useState(project?.tier || 'monitor')
-  const [saving, setSaving] = useState(false)
+  const [saving, setSaving]   = useState(false)
   const [visible, setVisible] = useState(false)
+  const [history, setHistory] = useState([])
 
   useEffect(() => { requestAnimationFrame(() => setVisible(true)) }, [])
+
+  useEffect(() => {
+    if (isNew) return
+    supabase
+      .from('project_tier_history')
+      .select('*')
+      .eq('project_id', project.id)
+      .order('changed_at', { ascending: false })
+      .then(({ data }) => setHistory(data || []))
+  }, [project?.id])
 
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') handleClose() }
@@ -294,6 +305,44 @@ function ProjectDrawer({ project, session, onClose, onSaved }) {
             }}>
             {TIER_DESCRIPTIONS[tier]}
           </div>
+
+          {!isNew && (
+            <div>
+              <SectionLabel>tier history</SectionLabel>
+              {history.length === 0 ? (
+                <p className="text-[12px] font-mono mt-3" style={{ color: 'rgba(13,55,100,0.35)' }}>
+                  no changes recorded yet
+                </p>
+              ) : (
+                <div className="mt-3 flex flex-col gap-2">
+                  {history.map(h => (
+                    <div key={h.id} className="flex items-start justify-between gap-4 py-2.5 px-3 border-l-2"
+                      style={{ borderColor: 'rgba(13,55,100,0.12)', background: 'rgba(13,55,100,0.02)' }}>
+                      <div>
+                        <div className="flex items-center gap-1.5 text-[12px] font-mono">
+                          <span style={{ color: TIER_TEXT_COLORS[h.from_tier] || 'rgba(13,55,100,0.50)' }}>
+                            {TIER_LABELS[h.from_tier] || h.from_tier}
+                          </span>
+                          <span style={{ color: 'rgba(13,55,100,0.35)' }}>→</span>
+                          <span className="font-medium" style={{ color: TIER_TEXT_COLORS[h.to_tier] || '#0D3764' }}>
+                            {TIER_LABELS[h.to_tier] || h.to_tier}
+                          </span>
+                        </div>
+                        {h.changed_by && (
+                          <div className="text-[11px] font-mono mt-0.5" style={{ color: 'rgba(13,55,100,0.40)' }}>
+                            {h.changed_by}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-[11px] font-mono flex-shrink-0" style={{ color: 'rgba(13,55,100,0.40)' }}>
+                        {new Date(h.changed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
