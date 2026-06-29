@@ -172,6 +172,23 @@ function ProjectDrawer({ project, session, onClose, onSaved }) {
     setTimeout(onClose, 250)
   }
 
+  async function handleDelete() {
+    if (!window.confirm(`remove "${project.name}" and all its assignments?`)) return
+    setSaving(true)
+    try {
+      await supabase.from('assignments').delete().eq('project_id', project.id)
+      const { error } = await supabase.from('projects').delete().eq('id', project.id)
+      if (error) throw error
+      showToast('project removed')
+      onSaved()
+      handleClose()
+    } catch (err) {
+      showToast(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function handleSave() {
     if (!name.trim()) { showToast('please enter a project name'); return }
     setSaving(true)
@@ -280,8 +297,18 @@ function ProjectDrawer({ project, session, onClose, onSaved }) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 flex justify-end gap-2 flex-shrink-0"
+        <div className="px-6 py-4 flex items-center gap-3 flex-shrink-0"
           style={{ borderTop: '1px solid rgba(13,55,100,0.10)', background: 'rgba(13,55,100,0.02)' }}>
+          {!isNew && (
+            <button onClick={handleDelete} disabled={saving}
+              className="text-sm font-medium font-mono px-4 py-2.5 border-2 cursor-pointer transition-all lowercase"
+              style={{ background: 'transparent', color: '#E3492B', borderColor: '#E3492B' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(227,73,43,0.06)'; e.currentTarget.style.boxShadow = '4px 4px 0px #0D3764' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.boxShadow = 'none' }}>
+              remove
+            </button>
+          )}
+          <div className="flex gap-2 ml-auto">
           <button onClick={handleClose}
             className="text-sm font-medium font-mono px-5 py-2.5 border-2 cursor-pointer transition-all lowercase"
             style={{ background: 'transparent', color: 'rgba(13,55,100,0.55)', borderColor: '#0D3764' }}
@@ -296,6 +323,7 @@ function ProjectDrawer({ project, session, onClose, onSaved }) {
             onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
             {saving ? 'saving…' : isNew ? 'create project' : 'save changes'}
           </button>
+          </div>
         </div>
       </div>
     </div>
