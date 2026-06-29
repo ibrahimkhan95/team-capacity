@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { ENGAGEMENT_OPTIONS, TIER_ORDER, TIER_LABELS, formatDate, parseDate } from '../lib/utils'
+import { ENGAGEMENT_OPTIONS, TIER_ORDER, TIER_LABELS, allocColor, formatDate, parseDate } from '../lib/utils'
 import { showToast } from './Toast'
 
 export function MemberModal({ member, squad, projects = [], onClose, onSaved }) {
@@ -13,13 +13,15 @@ export function MemberModal({ member, squad, projects = [], onClose, onSaved }) 
   const [notes, setNotes]         = useState(member?.notes || '')
   const [assignments, setAssignments] = useState(
     (member?.assignments || []).map(a => ({
-      project_id:  a.project_id || null,
-      project:     a.project_info?.name || a.project || '',
-      engagement:  a.engagement,
-      pct:         a.pct,
-      start_date:  a.start_date || '',
+      project_id:       a.project_id || null,
+      project:          a.project_info?.name || a.project || '',
+      engagement:       a.engagement,
+      engagement_mode:  a.engagement_mode  || 'fixed',
+      engagement_hours: a.engagement_hours || null,
+      pct:              a.pct,
+      start_date:       a.start_date || '',
       start_date_input: '',
-      notes:       a.notes || '',
+      notes:            a.notes || '',
     }))
   )
   const [localProjects, setLocalProjects] = useState(projects)
@@ -45,8 +47,8 @@ export function MemberModal({ member, squad, projects = [], onClose, onSaved }) 
   function addAssignment() {
     setAssignments(prev => [...prev, {
       project_id: null, project: '',
-      engagement: 'Full Time (100%)', pct: 100,
-      start_date: '', start_date_input: '', notes: '',
+      engagement: 'Full Time (100%)', engagement_mode: 'fixed', engagement_hours: null,
+      pct: 100, start_date: '', start_date_input: '', notes: '',
     }])
   }
 
@@ -60,11 +62,20 @@ export function MemberModal({ member, squad, projects = [], onClose, onSaved }) 
       if (idx !== i) return a
       const fields = typeof field === 'object' ? field : { [field]: value }
       const updated = { ...a, ...fields }
-      if ('engagement' in fields) {
+      // Only auto-derive pct from label in fixed mode
+      if ('engagement' in fields && (updated.engagement_mode ?? a.engagement_mode) === 'fixed') {
         updated.pct = ENGAGEMENT_OPTIONS.find(o => o.label === fields.engagement)?.pct || 100
       }
       return updated
     }))
+  }
+
+  function setEngagementMode(i, mode) {
+    if (mode === 'fixed') {
+      updateAssignment(i, { engagement_mode: 'fixed', engagement: 'Full Time (100%)', engagement_hours: null, pct: 100 })
+    } else {
+      updateAssignment(i, { engagement_mode: 'hourly', engagement: '', engagement_hours: null, pct: 0 })
+    }
   }
 
   function handleProjectSelect(i, projectId) {
@@ -255,13 +266,57 @@ export function MemberModal({ member, squad, projects = [], onClose, onSaved }) 
                         />
                       )}
 
+                      {/* Engagement mode toggle */}
+                      <div className="flex gap-1">
+                        {['fixed', 'hourly'].map(mode => (
+                          <button key={mode} type="button"
+                            onClick={() => setEngagementMode(i, mode)}
+                            className="text-[11px] font-mono px-2.5 py-1 border-2 lowercase transition-all"
+                            style={a.engagement_mode === mode
+                              ? { background: '#0D3764', borderColor: '#0D3764', color: '#FFFFFF' }
+                              : { background: 'transparent', borderColor: '#0D3764', color: 'rgba(13,55,100,0.55)' }
+                            }>
+                            {mode}
+                          </button>
+                        ))}
+                      </div>
+
                       <div className="grid grid-cols-2 gap-3">
-                        <FormGroup label="engagement">
-                          <select value={a.engagement} onChange={e => updateAssignment(i, 'engagement', e.target.value)}
-                            className={inputCls} style={inputStyle}>
-                            {ENGAGEMENT_OPTIONS.map(o => <option key={o.label}>{o.label}</option>)}
-                          </select>
-                        </FormGroup>
+                        {a.engagement_mode === 'hourly' ? (
+                          <FormGroup label="hours / week">
+                            <div className="relative">
+                              <input
+                                type="number" min="1" max="40"
+                                value={a.engagement_hours || ''}
+                                onChange={e => {
+                                  const hours = Math.max(0, Math.min(parseInt(e.target.value) || 0, 40))
+                                  updateAssignment(i, {
+                                    engagement_hours: hours || null,
+                                    engagement: hours ? `${hours}h/week` : '',
+                                    pct: hours ? Math.round(hours / 40 * 100) : 0,
+                                  })
+                                }}
+                                placeholder="e.g. 20"
+                                className={inputCls} style={{ ...inputStyle, paddingRight: '2.75rem' }}
+                                onFocus={e => e.target.style.borderColor = '#E3492B'}
+                                onBlur={e => e.target.style.borderColor = '#0D3764'}
+                              />
+                              {a.engagement_hours > 0 && (
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-mono font-medium pointer-events-none"
+                                  style={{ color: allocColor(a.pct) }}>
+                                  {a.pct}%
+                                </span>
+                              )}
+                            </div>
+                          </FormGroup>
+                        ) : (
+                          <FormGroup label="engagement">
+                            <select value={a.engagement} onChange={e => updateAssignment(i, 'engagement', e.target.value)}
+                              className={inputCls} style={inputStyle}>
+                              {ENGAGEMENT_OPTIONS.map(o => <option key={o.label}>{o.label}</option>)}
+                            </select>
+                          </FormGroup>
+                        )}
                         <FormGroup label="start date">
                           <input type="text"
                             value={a.start_date_input !== undefined ? a.start_date_input : (a.start_date ? formatDate(a.start_date) : '')}
