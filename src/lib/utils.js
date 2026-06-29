@@ -38,6 +38,14 @@ export const TIER_COLORS = {
   monitor:          '#BADFDB',
 }
 
+// Accessible text colors — monitor uses a darker teal since #BADFDB is too light for text
+export const TIER_TEXT_COLORS = {
+  active_oversight: '#E3492B',
+  coach:            '#0D3764',
+  empower:          '#1B998B',
+  monitor:          '#0A5950',
+}
+
 // Converts YYYY-MM-DD to DD/MM/YYYY for display
 export const formatDate = (d) => {
   if (!d) return '—'

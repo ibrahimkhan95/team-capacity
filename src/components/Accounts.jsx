@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Plus, ChevronDown, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import {
-  TIER_ORDER, TIER_LABELS, TIER_DESCRIPTIONS, TIER_COLORS, SQUAD_COLORS,
+  TIER_ORDER, TIER_LABELS, TIER_DESCRIPTIONS, TIER_COLORS, TIER_TEXT_COLORS, SQUAD_COLORS,
 } from '../lib/utils'
 import { showToast } from './Toast'
 
@@ -111,7 +111,8 @@ export function Accounts({ projects, members, session, onRefresh }) {
 }
 
 function TierSection({ tier, projects, squadsByProject, changingTier, onStartChange, onTierChange, onCancelChange }) {
-  const color = TIER_COLORS[tier]
+  const color     = TIER_COLORS[tier]
+  const textColor = TIER_TEXT_COLORS[tier]
   const label = TIER_LABELS[tier]
   const desc  = TIER_DESCRIPTIONS[tier]
 
@@ -121,7 +122,7 @@ function TierSection({ tier, projects, squadsByProject, changingTier, onStartCha
         style={{ borderBottom: `2px solid ${color}` }}>
         <h2 className="font-serif text-[20px] font-normal text-nb">{label}</h2>
         <span className="text-[12px] font-mono flex-1" style={{ color: 'rgba(13,55,100,0.55)' }}>{desc}</span>
-        <span className="text-[11px] font-mono font-medium" style={{ color }}>
+        <span className="text-[11px] font-mono font-medium" style={{ color: textColor }}>
           {projects.length} {projects.length === 1 ? 'project' : 'projects'}
         </span>
       </div>
@@ -150,7 +151,8 @@ function TierSection({ tier, projects, squadsByProject, changingTier, onStartCha
 }
 
 function ProjectCard({ project, squads, isChanging, onStartChange, onTierChange, onCancelChange }) {
-  const tierColor = TIER_COLORS[project.tier] || TIER_COLORS.monitor
+  const tierColor     = TIER_COLORS[project.tier]     || TIER_COLORS.monitor
+  const tierTextColor = TIER_TEXT_COLORS[project.tier] || TIER_TEXT_COLORS.monitor
 
   return (
     <div className="bg-sur border-2 p-4" style={{ borderColor: '#0D3764' }}>
@@ -188,7 +190,7 @@ function ProjectCard({ project, squads, isChanging, onStartChange, onTierChange,
         <button
           onClick={onStartChange}
           className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-1 transition-all"
-          style={{ background: `${tierColor}18`, color: tierColor }}
+          style={{ background: `${tierColor}30`, color: tierTextColor }}
           onMouseEnter={e => e.currentTarget.style.boxShadow = '2px 2px 0px #0D3764'}
           onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
         >
@@ -234,7 +236,8 @@ function NewProjectModal({ onClose, onSaved }) {
     }
   }
 
-  const tierColor = TIER_COLORS[tier]
+  const tierColor     = TIER_COLORS[tier]
+  const tierTextColor = TIER_TEXT_COLORS[tier]
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
@@ -285,8 +288,8 @@ function NewProjectModal({ onClose, onSaved }) {
 
           <div className="text-[12px] font-mono px-3 py-2.5 leading-relaxed"
             style={{
-              background: `${tierColor}12`,
-              color: tierColor,
+              background: `${tierColor}30`,
+              color: tierTextColor,
               borderLeft: `3px solid ${tierColor}`,
             }}>
             {TIER_DESCRIPTIONS[tier]}
