@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Plus, ChevronDown, X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import {
   TIER_ORDER, TIER_LABELS, TIER_DESCRIPTIONS, TIER_COLORS, TIER_TEXT_COLORS, SQUAD_COLORS,
@@ -7,10 +7,8 @@ import {
 import { showToast } from './Toast'
 
 export function Accounts({ projects, members, session, onRefresh }) {
-  const [showNewProject, setShowNewProject] = useState(false)
-  const [changingTier, setChangingTier] = useState(null)
+  const [drawerProject, setDrawerProject] = useState(null) // null=closed, 'new'=creating, {...}=editing
 
-  // Which squads are on each project
   const squadsByProject = useMemo(() => {
     const map = {}
     for (const m of members) {
@@ -24,7 +22,6 @@ export function Accounts({ projects, members, session, onRefresh }) {
     return map
   }, [members])
 
-  // Projects grouped by tier
   const byTier = useMemo(() => {
     const groups = {}
     for (const t of TIER_ORDER) groups[t] = []
@@ -35,36 +32,8 @@ export function Accounts({ projects, members, session, onRefresh }) {
     return groups
   }, [projects])
 
-  async function handleTierChange(project, newTier) {
-    setChangingTier(null)
-    if (project.tier === newTier) return
-    try {
-      const { error: uErr } = await supabase
-        .from('projects')
-        .update({ tier: newTier })
-        .eq('id', project.id)
-      if (uErr) throw uErr
-
-      const { error: hErr } = await supabase
-        .from('project_tier_history')
-        .insert({
-          project_id: project.id,
-          from_tier: project.tier,
-          to_tier: newTier,
-          changed_by: session?.user?.email || '',
-        })
-      if (hErr) throw hErr
-
-      showToast('tier updated')
-      onRefresh()
-    } catch (err) {
-      showToast(err.message)
-    }
-  }
-
   return (
     <div className="p-4 md:p-8">
-      {/* Header */}
       <div className="flex items-start justify-between mb-7">
         <div>
           <h1 className="font-serif text-[28px] font-normal text-nb leading-tight">Accounts</h1>
@@ -73,7 +42,7 @@ export function Accounts({ projects, members, session, onRefresh }) {
           </p>
         </div>
         <button
-          onClick={() => setShowNewProject(true)}
+          onClick={() => setDrawerProject('new')}
           className="inline-flex items-center gap-1.5 text-sm font-mono px-4 py-2 border-2 bg-no text-white cursor-pointer transition-all lowercase"
           style={{ borderColor: '#0D3764' }}
           onMouseEnter={e => e.currentTarget.style.boxShadow = '4px 4px 0px #0D3764'}
@@ -84,7 +53,6 @@ export function Accounts({ projects, members, session, onRefresh }) {
         </button>
       </div>
 
-      {/* Tier sections */}
       <div className="flex flex-col gap-10">
         {TIER_ORDER.map(tier => (
           <TierSection
@@ -92,36 +60,35 @@ export function Accounts({ projects, members, session, onRefresh }) {
             tier={tier}
             projects={byTier[tier]}
             squadsByProject={squadsByProject}
-            changingTier={changingTier}
-            onStartChange={pid => setChangingTier(pid)}
-            onTierChange={handleTierChange}
-            onCancelChange={() => setChangingTier(null)}
+            onProjectClick={project => setDrawerProject(project)}
           />
         ))}
       </div>
 
-      {showNewProject && (
-        <NewProjectModal
-          onClose={() => setShowNewProject(false)}
-          onSaved={() => { onRefresh(); setShowNewProject(false) }}
+      {drawerProject !== null && (
+        <ProjectDrawer
+          project={drawerProject === 'new' ? null : drawerProject}
+          session={session}
+          onClose={() => setDrawerProject(null)}
+          onSaved={() => { onRefresh(); setDrawerProject(null) }}
         />
       )}
     </div>
   )
 }
 
-function TierSection({ tier, projects, squadsByProject, changingTier, onStartChange, onTierChange, onCancelChange }) {
+function TierSection({ tier, projects, squadsByProject, onProjectClick }) {
   const color     = TIER_COLORS[tier]
   const textColor = TIER_TEXT_COLORS[tier]
-  const label = TIER_LABELS[tier]
-  const desc  = TIER_DESCRIPTIONS[tier]
 
   return (
     <div>
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-4 pb-3"
         style={{ borderBottom: `2px solid ${color}` }}>
-        <h2 className="font-serif text-[20px] font-normal text-nb">{label}</h2>
-        <span className="text-[12px] font-mono flex-1" style={{ color: 'rgba(13,55,100,0.55)' }}>{desc}</span>
+        <h2 className="font-serif text-[20px] font-normal text-nb">{TIER_LABELS[tier]}</h2>
+        <span className="text-[12px] font-mono flex-1" style={{ color: 'rgba(13,55,100,0.55)' }}>
+          {TIER_DESCRIPTIONS[tier]}
+        </span>
         <span className="text-[11px] font-mono font-medium" style={{ color: textColor }}>
           {projects.length} {projects.length === 1 ? 'project' : 'projects'}
         </span>
@@ -138,10 +105,7 @@ function TierSection({ tier, projects, squadsByProject, changingTier, onStartCha
               key={project.id}
               project={project}
               squads={[...(squadsByProject[project.id] || [])]}
-              isChanging={changingTier === project.id}
-              onStartChange={() => onStartChange(project.id)}
-              onTierChange={newTier => onTierChange(project, newTier)}
-              onCancelChange={onCancelChange}
+              onClick={() => onProjectClick(project)}
             />
           ))}
         </div>
@@ -150,15 +114,20 @@ function TierSection({ tier, projects, squadsByProject, changingTier, onStartCha
   )
 }
 
-function ProjectCard({ project, squads, isChanging, onStartChange, onTierChange, onCancelChange }) {
+function ProjectCard({ project, squads, onClick }) {
   const tierColor     = TIER_COLORS[project.tier]     || TIER_COLORS.monitor
   const tierTextColor = TIER_TEXT_COLORS[project.tier] || TIER_TEXT_COLORS.monitor
 
   return (
-    <div className="bg-sur border-2 p-4" style={{ borderColor: '#0D3764' }}>
+    <div
+      className="bg-sur border-2 p-4 cursor-pointer transition-all"
+      style={{ borderColor: '#0D3764' }}
+      onClick={onClick}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = '4px 4px 0px #0D3764'; e.currentTarget.style.background = '#F4F4F4' }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.background = '#FFFFFF' }}
+    >
       <p className="font-serif text-[16px] text-nb leading-tight mb-3">{project.name}</p>
 
-      {/* Squad indicators */}
       <div className="flex items-center gap-2 mb-4 min-h-[18px]">
         {squads.length === 0 ? (
           <span className="text-[11px] font-mono" style={{ color: 'rgba(13,55,100,0.30)' }}>no assignments</span>
@@ -172,39 +141,21 @@ function ProjectCard({ project, squads, isChanging, onStartChange, onTierChange,
         ))}
       </div>
 
-      {/* Tier badge / picker */}
-      {isChanging ? (
-        <select
-          autoFocus
-          defaultValue={project.tier}
-          onChange={e => onTierChange(e.target.value)}
-          onBlur={onCancelChange}
-          className="w-full text-[11px] font-mono border-2 px-2 py-1.5 outline-none"
-          style={{ borderColor: '#E3492B', background: '#FFFFFF', color: '#0D3764' }}
-        >
-          {TIER_ORDER.map(t => (
-            <option key={t} value={t}>{TIER_LABELS[t]}</option>
-          ))}
-        </select>
-      ) : (
-        <button
-          onClick={onStartChange}
-          className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-1 transition-all"
-          style={{ background: `${tierColor}30`, color: tierTextColor }}
-          onMouseEnter={e => e.currentTarget.style.boxShadow = '2px 2px 0px #0D3764'}
-          onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
-        >
-          {TIER_LABELS[project.tier] || 'Monitor'}
-          <ChevronDown size={10} strokeWidth={2} />
-        </button>
-      )}
+      <span
+        className="inline-flex items-center text-[11px] font-mono px-2 py-1"
+        style={{ background: `${tierColor}30`, color: tierTextColor }}
+      >
+        {TIER_LABELS[project.tier] || 'Monitor'}
+      </span>
     </div>
   )
 }
 
-function NewProjectModal({ onClose, onSaved }) {
-  const [name, setName]   = useState('')
-  const [tier, setTier]   = useState('monitor')
+function ProjectDrawer({ project, session, onClose, onSaved }) {
+  const isNew = !project
+
+  const [name, setName]   = useState(project?.name || '')
+  const [tier, setTier]   = useState(project?.tier || 'monitor')
   const [saving, setSaving] = useState(false)
   const [visible, setVisible] = useState(false)
 
@@ -225,10 +176,29 @@ function NewProjectModal({ onClose, onSaved }) {
     if (!name.trim()) { showToast('please enter a project name'); return }
     setSaving(true)
     try {
-      const { error } = await supabase.from('projects').insert({ name: name.trim(), tier })
-      if (error) throw error
-      showToast('project created')
+      if (isNew) {
+        const { error } = await supabase.from('projects').insert({ name: name.trim(), tier })
+        if (error) throw error
+        showToast('project created')
+      } else {
+        const { error } = await supabase
+          .from('projects')
+          .update({ name: name.trim(), tier })
+          .eq('id', project.id)
+        if (error) throw error
+
+        if (tier !== project.tier) {
+          await supabase.from('project_tier_history').insert({
+            project_id: project.id,
+            from_tier:  project.tier,
+            to_tier:    tier,
+            changed_by: session?.user?.email || '',
+          })
+        }
+        showToast('project updated')
+      }
       onSaved()
+      handleClose()
     } catch (err) {
       showToast(err.message)
     } finally {
@@ -240,23 +210,33 @@ function NewProjectModal({ onClose, onSaved }) {
   const tierTextColor = TIER_TEXT_COLORS[tier]
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] flex justify-end">
       <div
         className="absolute inset-0 transition-opacity duration-250"
         style={{ background: 'rgba(13,55,100,0.18)', opacity: visible ? 1 : 0 }}
         onClick={handleClose}
       />
+
       <div
-        className="relative bg-sur border-2 w-full max-w-sm mx-4 transition-all duration-250"
+        className="relative flex flex-col bg-sur h-full w-full md:w-[460px] transition-transform duration-250"
         style={{
-          borderColor: '#0D3764',
-          opacity: visible ? 1 : 0,
-          transform: visible ? 'translateY(0)' : 'translateY(12px)',
+          borderLeft: '2px solid #0D3764',
+          transform: visible ? 'translateX(0)' : 'translateX(100%)',
         }}
       >
-        <div className="flex justify-between items-center px-6 py-5"
+        {/* Header */}
+        <div className="flex justify-between items-center px-6 py-5 flex-shrink-0"
           style={{ borderBottom: '1px solid rgba(13,55,100,0.10)', background: 'rgba(13,55,100,0.03)' }}>
-          <h2 className="font-serif text-[18px] font-normal text-nb">new project</h2>
+          <div>
+            <h2 className="font-serif text-[20px] font-normal text-nb leading-none">
+              {isNew ? 'new project' : 'edit project'}
+            </h2>
+            {!isNew && (
+              <p className="text-[11px] font-mono mt-1" style={{ color: 'rgba(13,55,100,0.60)' }}>
+                {project.name}
+              </p>
+            )}
+          </div>
           <button onClick={handleClose} className="p-1.5 transition-colors"
             style={{ color: 'rgba(13,55,100,0.60)' }}
             onMouseEnter={e => e.currentTarget.style.color = '#0D3764'}
@@ -265,8 +245,11 @@ function NewProjectModal({ onClose, onSaved }) {
           </button>
         </div>
 
-        <div className="px-6 py-6 flex flex-col gap-4">
-          <ModalFormGroup label="project name">
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
+          <SectionLabel>project details</SectionLabel>
+
+          <FormGroup label="project name">
             <input
               type="text"
               value={name}
@@ -278,13 +261,13 @@ function NewProjectModal({ onClose, onSaved }) {
               onFocus={e => e.target.style.borderColor = '#E3492B'}
               onBlur={e => e.target.style.borderColor = '#0D3764'}
             />
-          </ModalFormGroup>
+          </FormGroup>
 
-          <ModalFormGroup label="tier">
+          <FormGroup label="tier">
             <select value={tier} onChange={e => setTier(e.target.value)} className={inputCls} style={inputStyle}>
               {TIER_ORDER.map(t => <option key={t} value={t}>{TIER_LABELS[t]}</option>)}
             </select>
-          </ModalFormGroup>
+          </FormGroup>
 
           <div className="text-[12px] font-mono px-3 py-2.5 leading-relaxed"
             style={{
@@ -296,7 +279,8 @@ function NewProjectModal({ onClose, onSaved }) {
           </div>
         </div>
 
-        <div className="px-6 py-4 flex justify-end gap-2"
+        {/* Footer */}
+        <div className="px-6 py-4 flex justify-end gap-2 flex-shrink-0"
           style={{ borderTop: '1px solid rgba(13,55,100,0.10)', background: 'rgba(13,55,100,0.02)' }}>
           <button onClick={handleClose}
             className="text-sm font-medium font-mono px-5 py-2.5 border-2 cursor-pointer transition-all lowercase"
@@ -310,7 +294,7 @@ function NewProjectModal({ onClose, onSaved }) {
             style={{ borderColor: '#0D3764' }}
             onMouseEnter={e => { if (!saving) e.currentTarget.style.boxShadow = '4px 4px 0px #0D3764' }}
             onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-            {saving ? 'creating…' : 'create project'}
+            {saving ? 'saving…' : isNew ? 'create project' : 'save changes'}
           </button>
         </div>
       </div>
@@ -318,7 +302,16 @@ function NewProjectModal({ onClose, onSaved }) {
   )
 }
 
-function ModalFormGroup({ label, children }) {
+function SectionLabel({ children }) {
+  return (
+    <div className="text-[11px] font-medium tracking-[0.10em] font-mono pb-2 lowercase"
+      style={{ color: 'rgba(13,55,100,0.60)', borderBottom: '1px solid rgba(13,55,100,0.10)' }}>
+      {children}
+    </div>
+  )
+}
+
+function FormGroup({ label, children }) {
   return (
     <div className="flex flex-col gap-1.5">
       <label className="text-[11px] font-medium tracking-[0.09em] font-mono lowercase"
