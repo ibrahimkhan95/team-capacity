@@ -15,6 +15,29 @@ export const ENGAGEMENT_OPTIONS = [
   { label: 'Part Time (25%)', pct: 25  },
 ]
 
+export const TIER_ORDER = ['active_oversight', 'coach', 'empower', 'monitor']
+
+export const TIER_LABELS = {
+  active_oversight: 'Active Oversight',
+  coach:            'Coach',
+  empower:          'Empower',
+  monitor:          'Monitor',
+}
+
+export const TIER_DESCRIPTIONS = {
+  active_oversight: 'High energy. Multiple scheduled slots per week. Deep involvement.',
+  coach:            'Requires structured 1:1s and specific milestone reviews.',
+  empower:          'Low touch. Full delegation with intervention only on escalation.',
+  monitor:          '15–30 min telemetry review & PM syncs. No direct intervention unless smoke is spotted.',
+}
+
+export const TIER_COLORS = {
+  active_oversight: '#E3492B',
+  coach:            '#0D3764',
+  empower:          '#1B998B',
+  monitor:          '#BADFDB',
+}
+
 // Converts YYYY-MM-DD to DD/MM/YYYY for display
 export const formatDate = (d) => {
   if (!d) return '—'

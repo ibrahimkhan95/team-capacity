@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { X, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { ENGAGEMENT_OPTIONS, formatDate, parseDate } from '../lib/utils'
+import { ENGAGEMENT_OPTIONS, TIER_ORDER, TIER_LABELS, formatDate, parseDate } from '../lib/utils'
 import { showToast } from './Toast'
 
-export function MemberModal({ member, squad, onClose, onSaved }) {
+export function MemberModal({ member, squad, projects = [], onClose, onSaved }) {
   const isNew = !member
 
   const [name, setName]           = useState(member?.name || '')
@@ -12,19 +12,24 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
   const [status, setStatus]       = useState(member?.status || 'On Project')
   const [notes, setNotes]         = useState(member?.notes || '')
   const [assignments, setAssignments] = useState(
-    (member?.assignments || []).map(a => ({ ...a }))
+    (member?.assignments || []).map(a => ({
+      project_id:  a.project_id || null,
+      project:     a.project_info?.name || a.project || '',
+      engagement:  a.engagement,
+      pct:         a.pct,
+      start_date:  a.start_date || '',
+      start_date_input: '',
+      notes:       a.notes || '',
+    }))
   )
-  const [saving, setSaving] = useState(false)
+  const [localProjects, setLocalProjects] = useState(projects)
+  const [creatingFor, setCreatingFor]     = useState(null)
+  const [saving, setSaving]   = useState(false)
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true))
   }, [])
-
-  function close() {
-    setVisible(false)
-    setTimeout(onClose, 250)
-  }
 
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') close() }
@@ -32,12 +37,22 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [])
 
+  function close() {
+    setVisible(false)
+    setTimeout(onClose, 250)
+  }
+
   function addAssignment() {
-    setAssignments(prev => [...prev, { project: '', engagement: 'Full Time (100%)', pct: 100, start_date: '', start_date_input: '', notes: '' }])
+    setAssignments(prev => [...prev, {
+      project_id: null, project: '',
+      engagement: 'Full Time (100%)', pct: 100,
+      start_date: '', start_date_input: '', notes: '',
+    }])
   }
 
   function removeAssignment(i) {
     setAssignments(prev => prev.filter((_, idx) => idx !== i))
+    if (creatingFor === i) setCreatingFor(null)
   }
 
   function updateAssignment(i, field, value) {
@@ -52,8 +67,27 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
     }))
   }
 
+  function handleProjectSelect(i, projectId) {
+    if (projectId === '__new__') {
+      setCreatingFor(i)
+      return
+    }
+    const proj = localProjects.find(p => p.id === projectId)
+    updateAssignment(i, { project_id: projectId, project: proj?.name || '' })
+  }
+
+  function handleProjectCreated(i, proj) {
+    setLocalProjects(prev => [...prev, proj].sort((a, b) => a.name.localeCompare(b.name)))
+    updateAssignment(i, { project_id: proj.id, project: proj.name })
+    setCreatingFor(null)
+  }
+
   async function handleSave() {
     if (!name.trim()) { showToast('please enter a name'); return }
+    if (status === 'On Project' && assignments.some(a => !a.project_id)) {
+      showToast('please select a project for all assignments')
+      return
+    }
     setSaving(true)
     try {
       if (isNew) {
@@ -64,7 +98,9 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
           .single()
         if (mErr) throw mErr
         if (assignments.length > 0) {
-          const rows = assignments.map(({ start_date_input: _sdi, ...a }) => ({ ...a, member_id: newMember.id }))
+          const rows = assignments.map(({ start_date_input: _sdi, ...a }) => ({
+            ...a, member_id: newMember.id,
+          }))
           const { error: aErr } = await supabase.from('assignments').insert(rows)
           if (aErr) throw aErr
         }
@@ -77,9 +113,8 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
         if (mErr) throw mErr
         await supabase.from('assignments').delete().eq('member_id', member.id)
         if (assignments.length > 0) {
-          const rows = assignments.map(({ id: _id, member_id: _mid, start_date_input: _sdi, ...rest }) => ({
-            ...rest,
-            member_id: member.id,
+          const rows = assignments.map(({ start_date_input: _sdi, ...rest }) => ({
+            ...rest, member_id: member.id,
           }))
           const { error: aErr } = await supabase.from('assignments').insert(rows)
           if (aErr) throw aErr
@@ -199,13 +234,26 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
                     </div>
 
                     <div className="flex flex-col gap-3">
-                      <FormGroup label="project / initiative name">
-                        <input type="text" value={a.project}
-                          onChange={e => updateAssignment(i, 'project', e.target.value)}
-                          placeholder="e.g. Client Phoenix" className={inputCls} style={inputStyle}
-                          onFocus={e => e.target.style.borderColor = '#E3492B'}
-                          onBlur={e => e.target.style.borderColor = '#0D3764'} />
+                      <FormGroup label="project">
+                        <select
+                          value={a.project_id || ''}
+                          onChange={e => handleProjectSelect(i, e.target.value)}
+                          className={inputCls} style={inputStyle}
+                        >
+                          <option value="">select project…</option>
+                          {localProjects.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          ))}
+                          <option value="__new__">+ new project</option>
+                        </select>
                       </FormGroup>
+
+                      {creatingFor === i && (
+                        <InlineNewProject
+                          onCreated={proj => handleProjectCreated(i, proj)}
+                          onCancel={() => setCreatingFor(null)}
+                        />
+                      )}
 
                       <div className="grid grid-cols-2 gap-3">
                         <FormGroup label="engagement">
@@ -285,6 +333,69 @@ export function MemberModal({ member, squad, onClose, onSaved }) {
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function InlineNewProject({ onCreated, onCancel }) {
+  const [name, setName]   = useState('')
+  const [tier, setTier]   = useState('monitor')
+  const [saving, setSaving] = useState(false)
+
+  async function handleCreate() {
+    if (!name.trim()) { showToast('enter a project name'); return }
+    setSaving(true)
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .insert({ name: name.trim(), tier })
+        .select()
+        .single()
+      if (error) throw error
+      showToast('project created')
+      onCreated(data)
+    } catch (err) {
+      showToast(err.message)
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="p-3 border-2 flex flex-col gap-2"
+      style={{ borderColor: '#E3492B', background: 'rgba(227,73,43,0.04)' }}>
+      <span className="text-[11px] font-mono tracking-wider lowercase" style={{ color: '#E3492B' }}>
+        new project
+      </span>
+      <input
+        type="text"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && handleCreate()}
+        placeholder="project name"
+        autoFocus
+        className={inputCls} style={inputStyle}
+        onFocus={e => e.target.style.borderColor = '#E3492B'}
+        onBlur={e => e.target.style.borderColor = '#0D3764'}
+      />
+      <select value={tier} onChange={e => setTier(e.target.value)} className={inputCls} style={inputStyle}>
+        {TIER_ORDER.map(t => <option key={t} value={t}>{TIER_LABELS[t]}</option>)}
+      </select>
+      <div className="flex gap-2">
+        <button onClick={onCancel}
+          className="text-[12px] font-mono px-3 py-1.5 border-2 cursor-pointer lowercase transition-all"
+          style={{ borderColor: '#0D3764', color: 'rgba(13,55,100,0.55)' }}
+          onMouseEnter={e => e.currentTarget.style.boxShadow = '2px 2px 0px #0D3764'}
+          onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+          cancel
+        </button>
+        <button onClick={handleCreate} disabled={saving || !name.trim()}
+          className="text-[12px] font-mono px-3 py-1.5 border-2 cursor-pointer lowercase transition-all disabled:opacity-50"
+          style={{ borderColor: '#E3492B', color: '#E3492B' }}
+          onMouseEnter={e => { if (!saving) e.currentTarget.style.boxShadow = '2px 2px 0px #0D3764' }}
+          onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+          {saving ? 'creating…' : 'add project'}
+        </button>
       </div>
     </div>
   )

@@ -4,7 +4,7 @@ import { totalAlloc, PROJECT_COLORS, formatDate } from '../lib/utils'
 import { StatusPill, SeniorityPill, AllocPill } from './Pill'
 import { MemberModal } from './MemberModal'
 
-export function Roster({ squadName, members, onBack, onRefresh }) {
+export function Roster({ squadName, members, projects = [], onBack, onRefresh }) {
   const [filter, setFilter]   = useState('all')
   const [search, setSearch]   = useState('')
   const [expanded, setExpanded] = useState(new Set())
@@ -28,7 +28,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
   const filtered = members.filter(m => {
     const mf = filter === 'all' || m.status === filter
     const ms = !q || m.name.toLowerCase().includes(q) ||
-      (m.assignments || []).some(a => a.project.toLowerCase().includes(q))
+      (m.assignments || []).some(a => (a.project_info?.name || a.project || '').toLowerCase().includes(q))
     return mf && ms
   })
 
@@ -121,7 +121,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
               const alloc = totalAlloc(m.assignments)
               const isExp = expanded.has(m.id)
               const hasA  = (m.assignments || []).length > 0 && m.status !== 'Bench'
-              const projectNames = m.status === 'Bench' ? '—' : (m.assignments || []).map(a => a.project).join(', ') || '—'
+              const projectNames = m.status === 'Bench' ? '—' : (m.assignments || []).map(a => a.project_info?.name || a.project).join(', ') || '—'
 
               const personRow = (
                 <tr key={`p-${m.id}`}
@@ -158,7 +158,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
                     <td></td>
                     <td colSpan={2} className="py-2 pl-10 text-[13px] font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>
                       <span className="inline-block w-1.5 h-1.5 mr-1.5 align-middle" style={{ background: dot }} />
-                      {a.project}
+                      {a.project_info?.name || a.project}
                     </td>
                     <td className="py-2 text-[13px] font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>
                       <span className="inline-flex items-center font-mono text-[12px] font-medium px-2 py-[2px]"
@@ -194,6 +194,7 @@ export function Roster({ squadName, members, onBack, onRefresh }) {
         <MemberModal
           member={editMember || undefined}
           squad={squadName}
+          projects={projects}
           onClose={closeModal}
           onSaved={() => { onRefresh(); closeModal() }}
         />

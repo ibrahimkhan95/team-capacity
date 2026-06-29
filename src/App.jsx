@@ -5,6 +5,7 @@ import { Auth } from './components/Auth'
 import { Sidebar } from './components/Sidebar'
 import { Dashboard } from './components/Dashboard'
 import { Roster } from './components/Roster'
+import { Accounts } from './components/Accounts'
 import { Toast } from './components/Toast'
 import './index.css'
 
@@ -12,6 +13,7 @@ export default function App() {
   const [session, setSession] = useState(null)
   const [authChecked, setAuthChecked] = useState(false)
   const [members, setMembers] = useState([])
+  const [projects, setProjects] = useState([])
   const [page, setPage] = useState('dashboard')
   const [currentSquad, setCurrentSquad] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -32,14 +34,27 @@ export default function App() {
   const fetchMembers = useCallback(async () => {
     const { data, error } = await supabase
       .from('members')
-      .select('*, assignments(*)')
+      .select('*, assignments(*, project_info:projects(id, name, tier))')
       .order('name')
     if (!error) setMembers(data || [])
   }, [])
 
+  const fetchProjects = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('name')
+    if (!error) setProjects(data || [])
+  }, [])
+
+  const refreshAll = useCallback(() => {
+    fetchMembers()
+    fetchProjects()
+  }, [fetchMembers, fetchProjects])
+
   useEffect(() => {
-    if (session) fetchMembers()
-  }, [session, fetchMembers])
+    if (session) refreshAll()
+  }, [session, refreshAll])
 
   function navigate(target, squad) {
     setPage(target)
@@ -50,6 +65,7 @@ export default function App() {
     await supabase.auth.signOut()
     setSession(null)
     setMembers([])
+    setProjects([])
   }
 
   if (!authChecked) {
@@ -136,13 +152,22 @@ export default function App() {
         {page === 'dashboard' && (
           <Dashboard members={members} onNavigate={navigate} />
         )}
+        {page === 'accounts' && (
+          <Accounts
+            projects={projects}
+            members={members}
+            session={session}
+            onRefresh={refreshAll}
+          />
+        )}
         {page === 'roster' && currentSquad && (
           <Roster
             key={currentSquad}
             squadName={currentSquad}
             members={squadMembers}
+            projects={projects}
             onBack={() => setPage('dashboard')}
-            onRefresh={fetchMembers}
+            onRefresh={refreshAll}
           />
         )}
       </main>
