@@ -20,7 +20,7 @@ export function MemberModal({ member, squad, projects = [], onClose, onSaved }) 
       engagement_hours: a.engagement_hours || null,
       pct:              a.pct,
       start_date:       a.start_date || '',
-      start_date_input: '',
+      start_date_input: a.start_date ? formatDate(a.start_date) : '',
       notes:            a.notes || '',
     }))
   )
