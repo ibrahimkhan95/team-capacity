@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Plus, X } from 'lucide-react'
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core'
 import { supabase } from '../lib/supabase'
 import {
   TIER_ORDER, TIER_LABELS, TIER_DESCRIPTIONS, TIER_COLORS, TIER_TEXT_COLORS, SQUAD_COLORS, SQUAD_NAMES,
@@ -10,8 +11,65 @@ export function Accounts({ projects, members, session, onRefresh }) {
   const [drawerProject, setDrawerProject] = useState(null) // null=closed, 'new'=creating, {...}=editing
   const [squadFilter, setSquadFilter] = useState(null)
   const [showInternal, setShowInternal] = useState(false)
+  const [pendingTiers, setPendingTiers] = useState({}) // projectId -> optimistic tier while a drag-move saves
+  const [activeProject, setActiveProject] = useState(null) // project currently being dragged
 
-  const internalProjects = useMemo(() => projects.filter(p => p.internal), [projects])
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+
+  // Drop the optimistic override once the refreshed data confirms the new tier
+  useEffect(() => {
+    setPendingTiers(prev => {
+      if (Object.keys(prev).length === 0) return prev
+      let changed = false
+      const next = { ...prev }
+      for (const id of Object.keys(next)) {
+        const p = projects.find(pr => String(pr.id) === id)
+        if (p && p.tier === next[id]) { delete next[id]; changed = true }
+      }
+      return changed ? next : prev
+    })
+  }, [projects])
+
+  const effectiveProjects = useMemo(() => {
+    if (Object.keys(pendingTiers).length === 0) return projects
+    return projects.map(p => pendingTiers[p.id] != null ? { ...p, tier: pendingTiers[p.id] } : p)
+  }, [projects, pendingTiers])
+
+  async function moveProjectToTier(project, newTier) {
+    if (newTier === project.tier) return
+    setPendingTiers(prev => ({ ...prev, [project.id]: newTier }))
+    try {
+      const { error } = await supabase.from('projects').update({ tier: newTier }).eq('id', project.id)
+      if (error) throw error
+      await supabase.from('project_tier_history').insert({
+        project_id: project.id,
+        from_tier:  project.tier,
+        to_tier:    newTier,
+        changed_by: session?.user?.email || '',
+      })
+      showToast(`moved to ${TIER_LABELS[newTier].toLowerCase()}`)
+      onRefresh()
+    } catch (err) {
+      setPendingTiers(prev => { const next = { ...prev }; delete next[project.id]; return next })
+      showToast(err.message)
+    }
+  }
+
+  function handleDragStart(event) {
+    const project = effectiveProjects.find(p => String(p.id) === String(event.active.id))
+    setActiveProject(project || null)
+  }
+
+  function handleDragEnd(event) {
+    const { active, over } = event
+    setActiveProject(null)
+    if (!over) return
+    const project = effectiveProjects.find(p => String(p.id) === String(active.id))
+    if (!project) return
+    moveProjectToTier(project, over.id)
+  }
+
+  const internalProjects = useMemo(() => effectiveProjects.filter(p => p.internal), [effectiveProjects])
 
   const squadsByProject = useMemo(() => {
     const map = {}
@@ -44,7 +102,7 @@ export function Accounts({ projects, members, session, onRefresh }) {
   const byTier = useMemo(() => {
     const groups = {}
     for (const t of TIER_ORDER) groups[t] = []
-    const external = projects.filter(p => !p.internal)
+    const external = effectiveProjects.filter(p => !p.internal)
     const filtered = squadFilter
       ? external.filter(p => squadsByProject[p.id]?.has(squadFilter))
       : external
@@ -53,7 +111,7 @@ export function Accounts({ projects, members, session, onRefresh }) {
       groups[key].push(p)
     }
     return groups
-  }, [projects, squadFilter, squadsByProject])
+  }, [effectiveProjects, squadFilter, squadsByProject])
 
   const visibleCount = Object.values(byTier).reduce((s, arr) => s + arr.length, 0)
 
@@ -95,17 +153,29 @@ export function Accounts({ projects, members, session, onRefresh }) {
         ))}
       </div>
 
-      <div className="flex flex-col gap-10">
-        {TIER_ORDER.map(tier => (
-          <TierSection
-            key={tier}
-            tier={tier}
-            projects={byTier[tier]}
-            membersByProject={membersByProject}
-            onProjectClick={project => setDrawerProject(project)}
-          />
-        ))}
-      </div>
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="flex flex-col gap-10">
+          {TIER_ORDER.map(tier => (
+            <TierSection
+              key={tier}
+              tier={tier}
+              projects={byTier[tier]}
+              membersByProject={membersByProject}
+              onProjectClick={project => setDrawerProject(project)}
+            />
+          ))}
+        </div>
+
+        <DragOverlay>
+          {activeProject && (
+            <ProjectCardContent
+              project={activeProject}
+              assignedMembers={membersByProject[activeProject.id] || []}
+              lifted
+            />
+          )}
+        </DragOverlay>
+      </DndContext>
 
       {internalProjects.length > 0 && (
         <div className="mt-10 pt-5" style={{ borderTop: '1px solid rgba(13,55,100,0.10)' }}>
@@ -154,6 +224,7 @@ export function Accounts({ projects, members, session, onRefresh }) {
 function TierSection({ tier, projects, membersByProject, onProjectClick }) {
   const color     = TIER_COLORS[tier]
   const textColor = TIER_TEXT_COLORS[tier]
+  const { setNodeRef, isOver } = useDroppable({ id: tier })
 
   return (
     <div>
@@ -168,27 +239,53 @@ function TierSection({ tier, projects, membersByProject, onProjectClick }) {
         </span>
       </div>
 
-      {projects.length === 0 ? (
-        <p className="text-[13px] font-mono py-2" style={{ color: 'rgba(13,55,100,0.35)' }}>
-          no projects in this tier
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {projects.map(project => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              assignedMembers={membersByProject[project.id] || []}
-              onClick={() => onProjectClick(project)}
-            />
-          ))}
-        </div>
-      )}
+      <div
+        ref={setNodeRef}
+        className="transition-all"
+        style={{
+          outline: isOver ? `2px dashed ${color}` : '2px dashed transparent',
+          outlineOffset: '4px',
+          background: isOver ? `${color}0D` : 'transparent',
+        }}
+      >
+        {projects.length === 0 ? (
+          <p className="text-[13px] font-mono py-2" style={{ color: 'rgba(13,55,100,0.35)' }}>
+            {isOver ? 'drop to move here' : 'no projects in this tier'}
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {projects.map(project => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                assignedMembers={membersByProject[project.id] || []}
+                onClick={() => onProjectClick(project)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
 function ProjectCard({ project, assignedMembers, onClick }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: project.id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      onClick={onClick}
+      style={{ opacity: isDragging ? 0.35 : 1, touchAction: 'none' }}
+    >
+      <ProjectCardContent project={project} assignedMembers={assignedMembers} />
+    </div>
+  )
+}
+
+function ProjectCardContent({ project, assignedMembers, lifted }) {
   const tierColor     = TIER_COLORS[project.tier]     || TIER_COLORS.monitor
   const tierTextColor = TIER_TEXT_COLORS[project.tier] || TIER_TEXT_COLORS.monitor
 
@@ -197,11 +294,15 @@ function ProjectCard({ project, assignedMembers, onClick }) {
 
   return (
     <div
-      className="bg-sur border-2 p-4 cursor-pointer transition-all"
-      style={{ borderColor: '#0D3764' }}
-      onClick={onClick}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = '4px 4px 0px #0D3764'; e.currentTarget.style.background = '#F4F4F4' }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.background = '#FFFFFF' }}
+      className="bg-sur border-2 p-4 transition-all"
+      style={{
+        borderColor: '#0D3764',
+        cursor: lifted ? 'grabbing' : 'grab',
+        boxShadow: lifted ? '4px 4px 0px #0D3764' : 'none',
+        background: lifted ? '#F4F4F4' : '#FFFFFF',
+      }}
+      onMouseEnter={lifted ? undefined : e => { e.currentTarget.style.boxShadow = '4px 4px 0px #0D3764'; e.currentTarget.style.background = '#F4F4F4' }}
+      onMouseLeave={lifted ? undefined : e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.background = '#FFFFFF' }}
     >
       <p className="font-serif text-[16px] text-nb leading-tight mb-3">{project.name}</p>
 
