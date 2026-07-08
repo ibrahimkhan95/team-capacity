@@ -29,3 +29,8 @@ alter table assignments enable row level security;
 -- Allow authenticated users full access
 create policy "auth_all_members"     on members     for all using (auth.role() = 'authenticated');
 create policy "auth_all_assignments" on assignments for all using (auth.role() = 'authenticated');
+
+-- Internal projects (e.g. NurtureOps): still trackable for assignments/capacity,
+-- but hidden from the Accounts tier view and not counted toward tier totals.
+alter table projects add column if not exists internal boolean not null default false;
+update projects set internal = true where name = 'NurtureOps';

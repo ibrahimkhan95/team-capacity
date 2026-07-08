@@ -41,9 +41,10 @@ export function Accounts({ projects, members, session, onRefresh }) {
   const byTier = useMemo(() => {
     const groups = {}
     for (const t of TIER_ORDER) groups[t] = []
+    const external = projects.filter(p => !p.internal)
     const filtered = squadFilter
-      ? projects.filter(p => squadsByProject[p.id]?.has(squadFilter))
-      : projects
+      ? external.filter(p => squadsByProject[p.id]?.has(squadFilter))
+      : external
     for (const p of filtered) {
       const key = TIER_ORDER.includes(p.tier) ? p.tier : 'monitor'
       groups[key].push(p)
@@ -203,6 +204,7 @@ function ProjectDrawer({ project, assignedMembers, session, onClose, onSaved }) 
 
   const [name, setName]   = useState(project?.name || '')
   const [tier, setTier]   = useState(project?.tier || 'monitor')
+  const [internal, setInternal] = useState(project?.internal || false)
   const [saving, setSaving]   = useState(false)
   const [visible, setVisible] = useState(false)
   const [history, setHistory] = useState([])
@@ -252,13 +254,13 @@ function ProjectDrawer({ project, assignedMembers, session, onClose, onSaved }) 
     setSaving(true)
     try {
       if (isNew) {
-        const { error } = await supabase.from('projects').insert({ name: name.trim(), tier })
+        const { error } = await supabase.from('projects').insert({ name: name.trim(), tier, internal })
         if (error) throw error
         showToast('project created')
       } else {
         const { error } = await supabase
           .from('projects')
-          .update({ name: name.trim(), tier })
+          .update({ name: name.trim(), tier, internal })
           .eq('id', project.id)
         if (error) throw error
 
@@ -352,6 +354,19 @@ function ProjectDrawer({ project, assignedMembers, session, onClose, onSaved }) 
             }}>
             {TIER_DESCRIPTIONS[tier]}
           </div>
+
+          <label className="flex items-start gap-2.5 cursor-pointer select-none">
+            <span
+              className="flex-shrink-0 w-4 h-4 border-2 flex items-center justify-center mt-0.5"
+              style={{ borderColor: '#0D3764', background: internal ? '#0D3764' : 'transparent' }}
+            >
+              {internal && <span className="w-1.5 h-1.5 bg-white" />}
+            </span>
+            <input type="checkbox" checked={internal} onChange={e => setInternal(e.target.checked)} className="hidden" />
+            <span className="text-[12px] font-mono leading-relaxed" style={{ color: 'rgba(13,55,100,0.70)' }}>
+              internal project — hidden from accounts, not counted in tiers
+            </span>
+          </label>
 
           {!isNew && assignedMembers.length > 0 && (
             <div>
