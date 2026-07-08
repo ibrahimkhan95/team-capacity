@@ -9,6 +9,9 @@ import { showToast } from './Toast'
 export function Accounts({ projects, members, session, onRefresh }) {
   const [drawerProject, setDrawerProject] = useState(null) // null=closed, 'new'=creating, {...}=editing
   const [squadFilter, setSquadFilter] = useState(null)
+  const [showInternal, setShowInternal] = useState(false)
+
+  const internalProjects = useMemo(() => projects.filter(p => p.internal), [projects])
 
   const squadsByProject = useMemo(() => {
     const map = {}
@@ -103,6 +106,37 @@ export function Accounts({ projects, members, session, onRefresh }) {
           />
         ))}
       </div>
+
+      {internalProjects.length > 0 && (
+        <div className="mt-10 pt-5" style={{ borderTop: '1px solid rgba(13,55,100,0.10)' }}>
+          <button
+            onClick={() => setShowInternal(v => !v)}
+            className="text-[12px] font-mono lowercase cursor-pointer transition-colors"
+            style={{ color: 'rgba(13,55,100,0.45)' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#0D3764'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(13,55,100,0.45)'}
+          >
+            {showInternal ? '−' : '+'} {internalProjects.length} internal {internalProjects.length === 1 ? 'project' : 'projects'} (hidden from tiers)
+          </button>
+
+          {showInternal && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {internalProjects.map(project => (
+                <button
+                  key={project.id}
+                  onClick={() => setDrawerProject(project)}
+                  className="text-[12px] font-mono px-3 py-1.5 border-2 cursor-pointer transition-all lowercase"
+                  style={{ background: 'transparent', borderColor: 'rgba(13,55,100,0.30)', color: 'rgba(13,55,100,0.55)' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#0D3764'; e.currentTarget.style.boxShadow = '2px 2px 0px #0D3764' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(13,55,100,0.30)'; e.currentTarget.style.boxShadow = 'none' }}
+                >
+                  {project.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {drawerProject !== null && (
         <ProjectDrawer
