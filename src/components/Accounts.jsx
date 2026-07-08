@@ -75,19 +75,19 @@ export function Accounts({ projects, members, session, onRefresh }) {
       </div>
 
       {/* Squad filter */}
-      <div className="flex items-center gap-2 mb-7 flex-wrap">
-        <SquadFilterBtn active={squadFilter === null} onClick={() => setSquadFilter(null)}>
-          all squads
-        </SquadFilterBtn>
-        {SQUAD_NAMES.map(sq => (
-          <SquadFilterBtn
-            key={sq}
-            active={squadFilter === sq}
-            color={SQUAD_COLORS[sq]}
-            onClick={() => setSquadFilter(squadFilter === sq ? null : sq)}
-          >
-            {sq.toLowerCase()}
-          </SquadFilterBtn>
+      <div className="flex gap-1.5 mb-7 flex-wrap">
+        {[['all squads', null], ...SQUAD_NAMES.map(sq => [sq.toLowerCase(), sq])].map(([label, val]) => (
+          <button key={label}
+            onClick={() => setSquadFilter(val === null ? null : val === squadFilter ? null : val)}
+            className="text-[13px] font-mono px-3 py-1.5 border-2 cursor-pointer transition-all lowercase"
+            style={squadFilter === val
+              ? { background: '#E3492B', borderColor: '#0D3764', color: '#FFFFFF', boxShadow: '2px 2px 0px #0D3764' }
+              : { background: 'transparent', borderColor: '#0D3764', color: 'rgba(13,55,100,0.55)' }}
+            onMouseEnter={e => { if (squadFilter !== val) e.currentTarget.style.boxShadow = '2px 2px 0px #0D3764' }}
+            onMouseLeave={e => { if (squadFilter !== val) e.currentTarget.style.boxShadow = 'none' }}>
+            {val && <span className="inline-block w-1.5 h-1.5 mr-1.5 align-middle rounded-full" style={{ background: squadFilter === val ? '#FFFFFF' : SQUAD_COLORS[val] }} />}
+            {label}
+          </button>
         ))}
       </div>
 
@@ -443,25 +443,6 @@ function ProjectDrawer({ project, assignedMembers, session, onClose, onSaved }) 
   )
 }
 
-function SquadFilterBtn({ active, color, onClick, children }) {
-  return (
-    <button
-      onClick={onClick}
-      className="inline-flex items-center gap-1.5 text-[12px] font-mono px-3 py-1.5 border-2 cursor-pointer transition-all lowercase"
-      style={{
-        borderColor: active ? '#0D3764' : 'rgba(13,55,100,0.25)',
-        background: active ? '#0D3764' : 'transparent',
-        color: active ? '#FFFFFF' : 'rgba(13,55,100,0.60)',
-        boxShadow: active ? '3px 3px 0px rgba(13,55,100,0.20)' : 'none',
-      }}
-      onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = '#0D3764' }}
-      onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = 'rgba(13,55,100,0.25)' }}
-    >
-      {color && <span className="w-1.5 h-1.5 inline-block flex-shrink-0 rounded-full" style={{ background: active ? '#FFFFFF' : color }} />}
-      {children}
-    </button>
-  )
-}
 
 function SectionLabel({ children }) {
   return (
