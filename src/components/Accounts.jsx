@@ -2,12 +2,13 @@ import { useState, useMemo, useEffect } from 'react'
 import { Plus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import {
-  TIER_ORDER, TIER_LABELS, TIER_DESCRIPTIONS, TIER_COLORS, TIER_TEXT_COLORS, SQUAD_COLORS,
+  TIER_ORDER, TIER_LABELS, TIER_DESCRIPTIONS, TIER_COLORS, TIER_TEXT_COLORS, SQUAD_COLORS, SQUAD_NAMES,
 } from '../lib/utils'
 import { showToast } from './Toast'
 
 export function Accounts({ projects, members, session, onRefresh }) {
   const [drawerProject, setDrawerProject] = useState(null) // null=closed, 'new'=creating, {...}=editing
+  const [squadFilter, setSquadFilter] = useState(null)
 
   const squadsByProject = useMemo(() => {
     const map = {}
@@ -22,23 +23,43 @@ export function Accounts({ projects, members, session, onRefresh }) {
     return map
   }, [members])
 
+  const membersByProject = useMemo(() => {
+    const map = {}
+    for (const m of members) {
+      for (const a of m.assignments || []) {
+        const pid = a.project_id || a.project_info?.id
+        if (!pid) continue
+        if (!map[pid]) map[pid] = []
+        if (!map[pid].find(x => x.id === m.id)) {
+          map[pid].push({ id: m.id, name: m.name, squad: m.squad })
+        }
+      }
+    }
+    return map
+  }, [members])
+
   const byTier = useMemo(() => {
     const groups = {}
     for (const t of TIER_ORDER) groups[t] = []
-    for (const p of projects) {
+    const filtered = squadFilter
+      ? projects.filter(p => squadsByProject[p.id]?.has(squadFilter))
+      : projects
+    for (const p of filtered) {
       const key = TIER_ORDER.includes(p.tier) ? p.tier : 'monitor'
       groups[key].push(p)
     }
     return groups
-  }, [projects])
+  }, [projects, squadFilter, squadsByProject])
+
+  const visibleCount = Object.values(byTier).reduce((s, arr) => s + arr.length, 0)
 
   return (
     <div className="p-4 md:p-8">
-      <div className="flex items-start justify-between mb-7">
+      <div className="flex items-start justify-between mb-5">
         <div>
           <h1 className="font-serif text-[28px] font-normal text-nb leading-tight">Accounts</h1>
           <p className="text-[12px] mt-1 tracking-wider font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>
-            {projects.length} projects · tiered account management
+            {visibleCount} projects · tiered account management
           </p>
         </div>
         <button
@@ -53,13 +74,30 @@ export function Accounts({ projects, members, session, onRefresh }) {
         </button>
       </div>
 
+      {/* Squad filter */}
+      <div className="flex items-center gap-2 mb-7 flex-wrap">
+        <SquadFilterBtn active={squadFilter === null} onClick={() => setSquadFilter(null)}>
+          all squads
+        </SquadFilterBtn>
+        {SQUAD_NAMES.map(sq => (
+          <SquadFilterBtn
+            key={sq}
+            active={squadFilter === sq}
+            color={SQUAD_COLORS[sq]}
+            onClick={() => setSquadFilter(squadFilter === sq ? null : sq)}
+          >
+            {sq.toLowerCase()}
+          </SquadFilterBtn>
+        ))}
+      </div>
+
       <div className="flex flex-col gap-10">
         {TIER_ORDER.map(tier => (
           <TierSection
             key={tier}
             tier={tier}
             projects={byTier[tier]}
-            squadsByProject={squadsByProject}
+            membersByProject={membersByProject}
             onProjectClick={project => setDrawerProject(project)}
           />
         ))}
@@ -68,6 +106,7 @@ export function Accounts({ projects, members, session, onRefresh }) {
       {drawerProject !== null && (
         <ProjectDrawer
           project={drawerProject === 'new' ? null : drawerProject}
+          assignedMembers={drawerProject === 'new' ? [] : (membersByProject[drawerProject?.id] || [])}
           session={session}
           onClose={() => setDrawerProject(null)}
           onSaved={() => { onRefresh(); setDrawerProject(null) }}
@@ -77,7 +116,7 @@ export function Accounts({ projects, members, session, onRefresh }) {
   )
 }
 
-function TierSection({ tier, projects, squadsByProject, onProjectClick }) {
+function TierSection({ tier, projects, membersByProject, onProjectClick }) {
   const color     = TIER_COLORS[tier]
   const textColor = TIER_TEXT_COLORS[tier]
 
@@ -104,7 +143,7 @@ function TierSection({ tier, projects, squadsByProject, onProjectClick }) {
             <ProjectCard
               key={project.id}
               project={project}
-              squads={[...(squadsByProject[project.id] || [])]}
+              assignedMembers={membersByProject[project.id] || []}
               onClick={() => onProjectClick(project)}
             />
           ))}
@@ -114,9 +153,12 @@ function TierSection({ tier, projects, squadsByProject, onProjectClick }) {
   )
 }
 
-function ProjectCard({ project, squads, onClick }) {
+function ProjectCard({ project, assignedMembers, onClick }) {
   const tierColor     = TIER_COLORS[project.tier]     || TIER_COLORS.monitor
   const tierTextColor = TIER_TEXT_COLORS[project.tier] || TIER_TEXT_COLORS.monitor
+
+  const visible  = assignedMembers.slice(0, 3)
+  const overflow = assignedMembers.length - visible.length
 
   return (
     <div
@@ -128,17 +170,22 @@ function ProjectCard({ project, squads, onClick }) {
     >
       <p className="font-serif text-[16px] text-nb leading-tight mb-3">{project.name}</p>
 
-      <div className="flex items-center gap-2 mb-4 min-h-[18px]">
-        {squads.length === 0 ? (
+      <div className="flex flex-col gap-1 mb-4 min-h-[18px]">
+        {assignedMembers.length === 0 ? (
           <span className="text-[11px] font-mono" style={{ color: 'rgba(13,55,100,0.30)' }}>no assignments</span>
-        ) : squads.sort().map(squad => (
-          <div key={squad} className="flex items-center gap-1">
-            <span className="w-2 h-2 inline-block flex-shrink-0" style={{ background: SQUAD_COLORS[squad] }} />
-            <span className="text-[11px] font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>
-              {squad.replace('Squad ', 'S')}
-            </span>
-          </div>
-        ))}
+        ) : (
+          <>
+            {visible.map(m => (
+              <div key={m.id} className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 inline-block flex-shrink-0 rounded-full" style={{ background: SQUAD_COLORS[m.squad] }} />
+                <span className="text-[11px] font-mono truncate" style={{ color: 'rgba(13,55,100,0.70)' }}>{m.name}</span>
+              </div>
+            ))}
+            {overflow > 0 && (
+              <span className="text-[11px] font-mono" style={{ color: 'rgba(13,55,100,0.35)' }}>+{overflow} more</span>
+            )}
+          </>
+        )}
       </div>
 
       <span
@@ -151,7 +198,7 @@ function ProjectCard({ project, squads, onClick }) {
   )
 }
 
-function ProjectDrawer({ project, session, onClose, onSaved }) {
+function ProjectDrawer({ project, assignedMembers, session, onClose, onSaved }) {
   const isNew = !project
 
   const [name, setName]   = useState(project?.name || '')
@@ -306,6 +353,23 @@ function ProjectDrawer({ project, session, onClose, onSaved }) {
             {TIER_DESCRIPTIONS[tier]}
           </div>
 
+          {!isNew && assignedMembers.length > 0 && (
+            <div>
+              <SectionLabel>team</SectionLabel>
+              <div className="mt-3 flex flex-col gap-1.5">
+                {assignedMembers.map(m => (
+                  <div key={m.id} className="flex items-center gap-2">
+                    <span className="w-2 h-2 inline-block flex-shrink-0 rounded-full" style={{ background: SQUAD_COLORS[m.squad] }} />
+                    <span className="text-[13px] font-mono" style={{ color: '#0D3764' }}>{m.name}</span>
+                    <span className="text-[11px] font-mono ml-auto" style={{ color: 'rgba(13,55,100,0.40)' }}>
+                      {m.squad.toLowerCase()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {!isNew && (
             <div>
               <SectionLabel>tier history</SectionLabel>
@@ -376,6 +440,26 @@ function ProjectDrawer({ project, session, onClose, onSaved }) {
         </div>
       </div>
     </div>
+  )
+}
+
+function SquadFilterBtn({ active, color, onClick, children }) {
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 text-[12px] font-mono px-3 py-1.5 border-2 cursor-pointer transition-all lowercase"
+      style={{
+        borderColor: active ? '#0D3764' : 'rgba(13,55,100,0.25)',
+        background: active ? '#0D3764' : 'transparent',
+        color: active ? '#FFFFFF' : 'rgba(13,55,100,0.60)',
+        boxShadow: active ? '3px 3px 0px rgba(13,55,100,0.20)' : 'none',
+      }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = '#0D3764' }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = 'rgba(13,55,100,0.25)' }}
+    >
+      {color && <span className="w-1.5 h-1.5 inline-block flex-shrink-0 rounded-full" style={{ background: active ? '#FFFFFF' : color }} />}
+      {children}
+    </button>
   )
 }
 
