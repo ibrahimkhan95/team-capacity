@@ -15,7 +15,7 @@ export const ENGAGEMENT_OPTIONS = [
   { label: 'Part Time (25%)', pct: 25  },
 ]
 
-export const TIER_ORDER = ['active_oversight', 'coach', 'empower', 'monitor']
+export const TIER_ORDER = ['active_oversight', 'coach', 'monitor', 'empower']
 
 export const TIER_LABELS = {
   active_oversight: 'Active Oversight',

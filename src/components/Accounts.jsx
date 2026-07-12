@@ -11,6 +11,7 @@ export function Accounts({ projects, members, session, onRefresh }) {
   const [drawerProject, setDrawerProject] = useState(null) // null=closed, 'new'=creating, {...}=editing
   const [squadFilter, setSquadFilter] = useState(null)
   const [showInternal, setShowInternal] = useState(false)
+  const [view, setView] = useState('list') // 'list' | 'matrix'
   const [pendingTiers, setPendingTiers] = useState({}) // projectId -> optimistic tier while a drag-move saves
   const [activeProject, setActiveProject] = useState(null) // project currently being dragged
 
@@ -136,35 +137,60 @@ export function Accounts({ projects, members, session, onRefresh }) {
         </button>
       </div>
 
-      {/* Squad filter */}
-      <div className="flex gap-1.5 mb-7 flex-wrap">
-        {[['all squads', null], ...SQUAD_NAMES.map(sq => [sq.toLowerCase(), sq])].map(([label, val]) => (
-          <button key={label}
-            onClick={() => setSquadFilter(val === null ? null : val === squadFilter ? null : val)}
-            className="text-[13px] font-mono px-3 py-1.5 border-2 cursor-pointer transition-all lowercase"
-            style={squadFilter === val
-              ? { background: '#E3492B', borderColor: '#0D3764', color: '#FFFFFF', boxShadow: '2px 2px 0px #0D3764' }
-              : { background: 'transparent', borderColor: '#0D3764', color: 'rgba(13,55,100,0.55)' }}
-            onMouseEnter={e => { if (squadFilter !== val) e.currentTarget.style.boxShadow = '2px 2px 0px #0D3764' }}
-            onMouseLeave={e => { if (squadFilter !== val) e.currentTarget.style.boxShadow = 'none' }}>
-            {val && <span className="inline-block w-1.5 h-1.5 mr-1.5 align-middle rounded-full" style={{ background: squadFilter === val ? '#FFFFFF' : SQUAD_COLORS[val] }} />}
-            {label}
-          </button>
-        ))}
+      {/* Squad filter + view toggle */}
+      <div className="flex items-center justify-between gap-3 mb-7 flex-wrap">
+        <div className="flex gap-1.5 flex-wrap">
+          {[['all squads', null], ...SQUAD_NAMES.map(sq => [sq.toLowerCase(), sq])].map(([label, val]) => (
+            <button key={label}
+              onClick={() => setSquadFilter(val === null ? null : val === squadFilter ? null : val)}
+              className="text-[13px] font-mono px-3 py-1.5 border-2 cursor-pointer transition-all lowercase"
+              style={squadFilter === val
+                ? { background: '#E3492B', borderColor: '#0D3764', color: '#FFFFFF', boxShadow: '2px 2px 0px #0D3764' }
+                : { background: 'transparent', borderColor: '#0D3764', color: 'rgba(13,55,100,0.55)' }}
+              onMouseEnter={e => { if (squadFilter !== val) e.currentTarget.style.boxShadow = '2px 2px 0px #0D3764' }}
+              onMouseLeave={e => { if (squadFilter !== val) e.currentTarget.style.boxShadow = 'none' }}>
+              {val && <span className="inline-block w-1.5 h-1.5 mr-1.5 align-middle rounded-full" style={{ background: squadFilter === val ? '#FFFFFF' : SQUAD_COLORS[val] }} />}
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-1.5 flex-wrap">
+          {[['list', 'list'], ['matrix', 'matrix']].map(([label, val]) => (
+            <button key={val}
+              onClick={() => setView(val)}
+              className="text-[13px] font-mono px-3 py-1.5 border-2 cursor-pointer transition-all lowercase"
+              style={view === val
+                ? { background: '#0D3764', borderColor: '#0D3764', color: '#FFFFFF', boxShadow: '2px 2px 0px #0D3764' }
+                : { background: 'transparent', borderColor: '#0D3764', color: 'rgba(13,55,100,0.55)' }}
+              onMouseEnter={e => { if (view !== val) e.currentTarget.style.boxShadow = '2px 2px 0px #0D3764' }}
+              onMouseLeave={e => { if (view !== val) e.currentTarget.style.boxShadow = 'none' }}>
+              {label} view
+            </button>
+          ))}
+        </div>
       </div>
 
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="flex flex-col gap-10">
-          {TIER_ORDER.map(tier => (
-            <TierSection
-              key={tier}
-              tier={tier}
-              projects={byTier[tier]}
-              membersByProject={membersByProject}
-              onProjectClick={project => setDrawerProject(project)}
-            />
-          ))}
-        </div>
+        {view === 'list' ? (
+          <div className="flex flex-col gap-10">
+            {TIER_ORDER.map(tier => (
+              <TierSection
+                key={tier}
+                tier={tier}
+                projects={byTier[tier]}
+                membersByProject={membersByProject}
+                onProjectClick={project => setDrawerProject(project)}
+              />
+            ))}
+          </div>
+        ) : (
+          <MatrixView
+            byTier={byTier}
+            membersByProject={membersByProject}
+            onProjectClick={project => setDrawerProject(project)}
+          />
+        )}
 
         <DragOverlay>
           {activeProject && (
@@ -265,6 +291,129 @@ function TierSection({ tier, projects, membersByProject, onProjectClick }) {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// Quadrants: rows = account risk/complexity (high → low), columns = designer readiness (low → high)
+const MATRIX_CELLS = [
+  ['active_oversight', 'monitor'],
+  ['coach', 'empower'],
+]
+
+function MatrixView({ byTier, membersByProject, onProjectClick }) {
+  const axisLabelStyle = { color: 'rgba(13,55,100,0.45)' }
+
+  return (
+    <div>
+      <div className="flex">
+        <div className="w-8 flex-shrink-0" />
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 mb-2">
+          <span className="text-[11px] font-mono tracking-wider lowercase text-center" style={axisLabelStyle}>
+            designer readiness — low
+          </span>
+          <span className="text-[11px] font-mono tracking-wider lowercase text-center" style={axisLabelStyle}>
+            designer readiness — high
+          </span>
+        </div>
+      </div>
+
+      <div className="flex">
+        <div className="w-8 flex-shrink-0 grid grid-rows-2">
+          <div className="flex items-center justify-center">
+            <span className="text-[11px] font-mono tracking-wider lowercase whitespace-nowrap"
+              style={{ ...axisLabelStyle, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+              risk — high
+            </span>
+          </div>
+          <div className="flex items-center justify-center">
+            <span className="text-[11px] font-mono tracking-wider lowercase whitespace-nowrap"
+              style={{ ...axisLabelStyle, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+              risk — low
+            </span>
+          </div>
+        </div>
+
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {MATRIX_CELLS.flat().map(tier => (
+            <QuadrantCell
+              key={tier}
+              tier={tier}
+              projects={byTier[tier]}
+              membersByProject={membersByProject}
+              onProjectClick={onProjectClick}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function QuadrantCell({ tier, projects, membersByProject, onProjectClick }) {
+  const color     = TIER_COLORS[tier]
+  const textColor = TIER_TEXT_COLORS[tier]
+  const { setNodeRef, isOver } = useDroppable({ id: tier })
+
+  return (
+    <div
+      ref={setNodeRef}
+      className="border-2 p-4 transition-all min-h-[220px]"
+      style={{
+        borderColor: '#0D3764',
+        background: isOver ? `${color}30` : `${color}14`,
+        outline: isOver ? `2px dashed ${color}` : '2px dashed transparent',
+        outlineOffset: '-6px',
+      }}
+    >
+      <div className="flex items-baseline justify-between gap-2 mb-1">
+        <h3 className="font-serif text-[18px] font-normal text-nb">{TIER_LABELS[tier]}</h3>
+        <span className="text-[11px] font-mono font-medium flex-shrink-0" style={{ color: textColor }}>
+          {projects.length} {projects.length === 1 ? 'project' : 'projects'}
+        </span>
+      </div>
+      <p className="text-[11px] font-mono mb-3 leading-relaxed" style={{ color: 'rgba(13,55,100,0.55)' }}>
+        {TIER_DESCRIPTIONS[tier]}
+      </p>
+
+      {projects.length === 0 ? (
+        <p className="text-[12px] font-mono" style={{ color: 'rgba(13,55,100,0.35)' }}>
+          {isOver ? 'drop to move here' : 'no projects in this tier'}
+        </p>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {projects.map(project => (
+            <ProjectChip
+              key={project.id}
+              project={project}
+              memberCount={(membersByProject[project.id] || []).length}
+              onClick={() => onProjectClick(project)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ProjectChip({ project, memberCount, onClick }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: project.id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 text-[12px] font-mono px-2.5 py-1.5 border-2 bg-sur transition-all"
+      style={{ borderColor: '#0D3764', cursor: isDragging ? 'grabbing' : 'grab', opacity: isDragging ? 0.35 : 1, touchAction: 'none' }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = '3px 3px 0px #0D3764'}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
+    >
+      {project.name}
+      {memberCount > 0 && (
+        <span style={{ color: 'rgba(13,55,100,0.40)' }}>· {memberCount}</span>
+      )}
     </div>
   )
 }
