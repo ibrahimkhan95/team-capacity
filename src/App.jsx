@@ -84,6 +84,7 @@ export default function App() {
     'arsal.idrees@arbisoft.com',
     'muhammad.ali.ashraf@arbisoft.com',
     'bakhtawar.bilal@arbisoft.com',
+    'amna.usman@arbisoft.com',
   ]
 
   if (!ALLOWED_EMAILS.includes(session.user.email)) {
