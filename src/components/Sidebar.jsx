@@ -1,4 +1,4 @@
-import { X, LayoutGrid, Briefcase } from 'lucide-react'
+import { X, LayoutGrid, Briefcase, Route } from 'lucide-react'
 import { SQUAD_COLORS, SQUAD_NAMES } from '../lib/utils'
 
 export function Sidebar({ currentPage, currentSquad, onNavigate, onSignOut, isOpen, onClose }) {
@@ -65,6 +65,13 @@ export function Sidebar({ currentPage, currentSquad, onNavigate, onSignOut, isOp
           icon={<Briefcase size={14} className="flex-shrink-0" style={{ opacity: 0.65 }} />}
         >
           accounts
+        </NavItem>
+        <NavItem
+          active={currentPage === 'placements'}
+          onClick={() => handleNavigate('placements')}
+          icon={<Route size={14} className="flex-shrink-0" style={{ opacity: 0.65 }} />}
+        >
+          placements
         </NavItem>
 
         {/* Squads nav */}

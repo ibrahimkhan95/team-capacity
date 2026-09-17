@@ -6,6 +6,7 @@ import { Sidebar } from './components/Sidebar'
 import { Dashboard } from './components/Dashboard'
 import { Roster } from './components/Roster'
 import { Accounts } from './components/Accounts'
+import { Placements } from './components/Placements'
 import { Toast } from './components/Toast'
 import './index.css'
 
@@ -14,6 +15,7 @@ export default function App() {
   const [authChecked, setAuthChecked] = useState(false)
   const [members, setMembers] = useState([])
   const [projects, setProjects] = useState([])
+  const [placements, setPlacements] = useState([])
   const [page, setPage] = useState('dashboard')
   const [currentSquad, setCurrentSquad] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -47,10 +49,19 @@ export default function App() {
     if (!error) setProjects(data || [])
   }, [])
 
+  const fetchPlacements = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('placements')
+      .select('*')
+      .order('created_at')
+    if (!error) setPlacements(data || [])
+  }, [])
+
   const refreshAll = useCallback(() => {
     fetchMembers()
     fetchProjects()
-  }, [fetchMembers, fetchProjects])
+    fetchPlacements()
+  }, [fetchMembers, fetchProjects, fetchPlacements])
 
   useEffect(() => {
     if (session) refreshAll()
@@ -66,6 +77,7 @@ export default function App() {
     setSession(null)
     setMembers([])
     setProjects([])
+    setPlacements([])
   }
 
   if (!authChecked) {
@@ -161,12 +173,21 @@ export default function App() {
             onRefresh={refreshAll}
           />
         )}
+        {page === 'placements' && (
+          <Placements
+            placements={placements}
+            projects={projects}
+            members={members}
+            onRefresh={refreshAll}
+          />
+        )}
         {page === 'roster' && currentSquad && (
           <Roster
             key={currentSquad}
             squadName={currentSquad}
             members={squadMembers}
             projects={projects}
+            placements={placements}
             onBack={() => setPage('dashboard')}
             onRefresh={refreshAll}
           />

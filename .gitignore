@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# prototype bundle from `npm run build:demo`
+dist-demo
+nurture-prototype.zip

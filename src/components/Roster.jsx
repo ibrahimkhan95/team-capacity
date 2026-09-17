@@ -1,15 +1,39 @@
 import { useState } from 'react'
-import { Search, Plus, ChevronLeft, ChevronRight, MoveRight } from 'lucide-react'
-import { totalAlloc, PROJECT_COLORS, formatDate } from '../lib/utils'
+import { Search, Plus, ChevronLeft, ChevronRight, MoveRight, Link2, Check } from 'lucide-react'
+import {
+  totalAlloc, PROJECT_COLORS, formatDate, PLACEMENT_STAGE_LABELS,
+  PLACEMENT_STAGE_COLORS, PLACEMENT_STAGE_ICONS, placementShareUrl, copyToClipboard,
+} from '../lib/utils'
+
+// Fixed box so the chip matches the placements page — width fits the longest
+// label ("onboarding date set") on one line, nowrap stops it wrapping.
+const PLACEMENT_CHIP_H = 30
+const placementChipCls =
+  'inline-flex items-center justify-center gap-1.5 text-[12px] font-mono border-2 lowercase whitespace-nowrap'
+const placementChipStyle = { height: PLACEMENT_CHIP_H, width: 180 }
 import { StatusPill, SeniorityPill, AllocPill } from './Pill'
 import { MemberModal } from './MemberModal'
+import { showToast } from './Toast'
 
-export function Roster({ squadName, members, projects = [], onBack, onRefresh }) {
+export function Roster({ squadName, members, projects = [], placements = [], onBack, onRefresh }) {
   const [filter, setFilter]   = useState('all')
   const [search, setSearch]   = useState('')
   const [expanded, setExpanded] = useState(new Set())
   const [editMember, setEditMember] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  const [copiedId, setCopiedId] = useState(null) // placement whose share link was just copied
+
+  function activePlacementFor(memberId) {
+    return placements.find(p => p.member_id === memberId)
+  }
+
+  async function copyShareLink(placement) {
+    const ok = await copyToClipboard(placementShareUrl(placement.share_token))
+    if (!ok) { showToast('could not copy — open the placement to get the link'); return }
+    showToast('share link copied')
+    setCopiedId(placement.id)
+    setTimeout(() => setCopiedId(null), 1800)
+  }
 
   function toggleExpand(id, e) {
     e.stopPropagation()
@@ -107,13 +131,14 @@ export function Roster({ squadName, members, projects = [], onBack, onRefresh })
               <th className="th">status</th>
               <th className="th">projects</th>
               <th className="th">total allocation</th>
+              <th className="th">placement</th>
               <th className="th"></th>
             </tr>
           </thead>
           <tbody>
             {!filtered.length ? (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-sm font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>
+                <td colSpan={8} className="text-center py-12 text-sm font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>
                   no members found
                 </td>
               </tr>
@@ -122,6 +147,7 @@ export function Roster({ squadName, members, projects = [], onBack, onRefresh })
               const isExp = expanded.has(m.id)
               const hasA  = (m.assignments || []).length > 0 && m.status !== 'Bench'
               const projectNames = m.status === 'Bench' ? '—' : (m.assignments || []).map(a => a.project_info?.name || a.project).join(', ') || '—'
+              const placement = activePlacementFor(m.id)
 
               const personRow = (
                 <tr key={`p-${m.id}`}
@@ -145,6 +171,43 @@ export function Roster({ squadName, members, projects = [], onBack, onRefresh })
                   <td className="td"><StatusPill status={m.status} /></td>
                   <td className="td text-[13px]" style={{ color: 'rgba(13,55,100,0.60)' }}>{projectNames}</td>
                   <td className="td"><AllocPill pct={alloc} isBench={m.status === 'Bench'} /></td>
+                  {/* Read-only status. Placements are started and edited from
+                      the Placements page — they're anchored to a project, not
+                      a designer, so they can't begin here. */}
+                  <td className="td" onClick={e => e.stopPropagation()}>
+                    {placement ? (() => {
+                      const color = PLACEMENT_STAGE_COLORS[placement.stage] || '#0D3764'
+                      const StageIcon = PLACEMENT_STAGE_ICONS[placement.stage]
+                      const justCopied = copiedId === placement.id
+                      return (
+                        <div className="inline-flex items-center gap-1.5">
+                          <span className={placementChipCls}
+                            title={`${placement.project_name} — ${PLACEMENT_STAGE_LABELS[placement.stage].toLowerCase()}`}
+                            style={{ ...placementChipStyle, borderColor: color, color }}>
+                            {StageIcon && <StageIcon size={12} strokeWidth={2} className="flex-shrink-0" />}
+                            {PLACEMENT_STAGE_LABELS[placement.stage].toLowerCase()}
+                          </span>
+                          <button onClick={() => copyShareLink(placement)}
+                            title={justCopied ? 'link copied' : 'copy share link for the client'}
+                            aria-label="copy share link"
+                            className="inline-flex items-center justify-center border-2 cursor-pointer transition-all flex-shrink-0"
+                            style={{
+                              height: PLACEMENT_CHIP_H, width: PLACEMENT_CHIP_H,
+                              borderColor: justCopied ? '#1B998B' : '#0D3764',
+                              color: justCopied ? '#1B998B' : 'rgba(13,55,100,0.55)',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.boxShadow = '2px 2px 0px #0D3764'}
+                            onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                            {justCopied
+                              ? <Check size={12} strokeWidth={2.5} />
+                              : <Link2 size={12} strokeWidth={2} />}
+                          </button>
+                        </div>
+                      )
+                    })() : (
+                      <span className="text-[13px] font-mono" style={{ color: 'rgba(13,55,100,0.35)' }}>—</span>
+                    )}
+                  </td>
                   <td className="td">
                     <MoveRight size={13} strokeWidth={1.5} style={{ color: 'rgba(13,55,100,0.50)' }} />
                   </td>
@@ -169,7 +232,7 @@ export function Roster({ squadName, members, projects = [], onBack, onRefresh })
                     <td className="py-2 text-[13px] font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>
                       since {formatDate(a.start_date)}
                     </td>
-                    <td colSpan={2} className="py-2">
+                    <td colSpan={3} className="py-2">
                       <div className="flex items-center gap-2">
                         <div className="w-[52px] h-2 overflow-hidden" style={{ background: 'rgba(13,55,100,0.10)' }}>
                           <div className="h-full" style={{ width: `${a.pct}%`, background: dot }} />

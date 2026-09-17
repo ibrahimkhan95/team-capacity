@@ -5,7 +5,9 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // dist-demo is the prototype bundle from `npm run build:demo` — minified
+  // output, not source.
+  globalIgnores(['dist', 'dist-demo']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
