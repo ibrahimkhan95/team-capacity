@@ -52,7 +52,9 @@ export default function App() {
   const fetchPlacements = useCallback(async () => {
     const { data, error } = await supabase
       .from('placements')
-      .select('*')
+      // `designers` is the one-to-many; the shape matches what
+      // placementDesigners() expects, so the UI reads it directly.
+      .select('*, designers:placement_designers(member_id, member_name, squad, pct, engagement)')
       .order('created_at')
     if (!error) setPlacements(data || [])
   }, [])

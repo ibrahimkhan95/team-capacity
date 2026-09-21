@@ -132,7 +132,7 @@ export function findDemoPlacement(token) {
 
   const project = demoProjects.find(p => p.id === pl.project_id)
   return {
-    member_name:     pl.member_name || '',
+    designers:       (pl.designers || []).map(d => ({ member_name: d.member_name, pct: d.pct })),
     project_name:    pl.project_name,
     stage:           pl.stage,
     onboarding_date: pl.onboarding_date,

@@ -55,17 +55,36 @@ export function PublicPipeline({ token }) {
           </div>
         )}
 
-        {!loading && placement && (
+        {!loading && placement && (() => {
+          // The RPC returns the team as JSON; older rows may still only carry a
+          // single member_name.
+          const team = Array.isArray(placement.designers)
+            ? placement.designers
+            : placement.member_name
+              ? [{ member_name: placement.member_name, pct: null }]
+              : []
+          return (
           <div className="bg-sur border-2 overflow-hidden" style={{ borderColor: '#0D3764' }}>
-            {/* The project is the anchor — a designer may not be assigned yet,
-                so it leads and the designer is secondary. */}
+            {/* The project is the anchor — designers may not be assigned yet,
+                so it leads and the team is secondary. */}
             <div className="px-7 py-6" style={{ borderBottom: '1px solid rgba(13,55,100,0.10)' }}>
               <h1 className="font-serif text-[22px] font-normal text-nb">{placement.project_name}</h1>
-              <p className="text-[12px] font-mono mt-1" style={{ color: 'rgba(13,55,100,0.60)' }}>
-                {placement.member_name
-                  ? placement.member_name
-                  : <span className="lowercase">designer being assigned</span>}
-              </p>
+              {team.length === 0 ? (
+                <p className="text-[12px] font-mono mt-1 lowercase" style={{ color: 'rgba(13,55,100,0.60)' }}>
+                  designers being assigned
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {team.map((d, i) => (
+                    <span key={i}
+                      className="inline-flex items-center gap-1.5 font-mono text-[12px] font-medium px-2.5 py-[3px] whitespace-nowrap"
+                      style={{ background: 'rgba(100,116,139,0.10)', color: '#334155' }}>
+                      {d.member_name}
+                      {d.pct != null && <span style={{ color: '#15803D' }}>{d.pct}%</span>}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="px-7 py-6 flex flex-col gap-0">
@@ -114,7 +133,8 @@ export function PublicPipeline({ token }) {
               })}
             </div>
           </div>
-        )}
+          )
+        })()}
       </div>
     </div>
   )

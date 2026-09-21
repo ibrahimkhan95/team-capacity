@@ -116,6 +116,30 @@ export function PlacementDrawer({ placement, projects = [], allMembers = [], onC
     }
   }
 
+  // Replace the whole designer set for a placement. Same delete-then-insert
+  // approach MemberModal uses for assignments — simpler than diffing, and the
+  // rows carry no history worth preserving.
+  async function saveDesigners(placementId) {
+    const { error: delErr } = await supabase
+      .from('placement_designers').delete().eq('placement_id', placementId)
+    if (delErr) throw delErr
+
+    const rows = designers
+      .filter(d => d.member_id)
+      .map(d => ({
+        placement_id: placementId,
+        member_id:    d.member_id,
+        member_name:  d.member_name || '',
+        squad:        d.squad || '',
+        pct:          d.pct ?? 100,
+        engagement:   d.engagement || 'Full Time (100%)',
+      }))
+    if (rows.length === 0) return
+
+    const { error: insErr } = await supabase.from('placement_designers').insert(rows)
+    if (insErr) throw insErr
+  }
+
   async function handleSave() {
     if (!projectId) { showToast('please select or create a project'); return }
 
@@ -130,9 +154,8 @@ export function PlacementDrawer({ placement, projects = [], allMembers = [], onC
       const payload = {
         project_id:        projectId,
         project_name:      projectName,
-        // Only the first designer is persisted for now — `placements` has no
-        // column for the rest, and writing one would error. The multi-designer
-        // list is prototype-only until the junction table migration lands.
+        // The full team lives in placement_designers. These are kept in sync
+        // with the first designer so anything still reading them stays correct.
         member_id:         designers[0]?.member_id || null,
         member_name:       designers[0]?.member_name || '',
         stage,
@@ -157,6 +180,7 @@ export function PlacementDrawer({ placement, projects = [], allMembers = [], onC
         const { data, error } = await supabase
           .from('placements').insert(payload).select().single()
         if (error) throw error
+        await saveDesigners(data.id)
         showToast('placement started — link ready below')
         setCreatedPlacement(data)
         onRefresh()
@@ -164,6 +188,7 @@ export function PlacementDrawer({ placement, projects = [], allMembers = [], onC
         const { error } = await supabase
           .from('placements').update(payload).eq('id', activePlacement.id)
         if (error) throw error
+        await saveDesigners(activePlacement.id)
         showToast(isFinalStage ? 'placement finished' : 'placement updated')
         onSaved()
         close()
