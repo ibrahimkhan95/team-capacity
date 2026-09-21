@@ -3,7 +3,10 @@ import { Plus, Search, Link2, Check, MoveRight } from 'lucide-react'
 import {
   PLACEMENT_STAGES, PLACEMENT_STAGE_LABELS, PLACEMENT_STAGE_COLORS,
   PLACEMENT_STAGE_ICONS, placementShareUrl, copyToClipboard, formatDate,
+  placementDesigners,
 } from '../lib/utils'
+import { DesignerTag } from './Pill'
+import { MemberDetail } from './MemberDetail'
 import { showToast } from './Toast'
 import { PlacementDrawer } from './PlacementDrawer'
 
@@ -14,6 +17,12 @@ export function Placements({ placements = [], projects = [], members = [], onRef
   const [filter, setFilter]   = useState('all')
   const [editing, setEditing] = useState(null) // null = closed, 'new' = creating, {...} = editing
   const [copiedId, setCopiedId] = useState(null)
+  const [detailMember, setDetailMember] = useState(null) // designer whose read-only view is open
+
+  function openMemberDetail(memberId) {
+    const m = members.find(x => x.id === memberId)
+    if (m) setDetailMember(m)
+  }
 
   async function copyShareLink(placement, e) {
     e.stopPropagation()
@@ -29,11 +38,11 @@ export function Placements({ placements = [], projects = [], members = [], onRef
     const matchesStage = filter === 'all' || p.stage === filter
     const matchesQuery = !q ||
       (p.project_name || '').toLowerCase().includes(q) ||
-      (p.member_name || '').toLowerCase().includes(q)
+      placementDesigners(p).some(d => (d.member_name || '').toLowerCase().includes(q))
     return matchesStage && matchesQuery
   })
 
-  const unassigned = placements.filter(p => !p.member_id).length
+  const unassigned = placements.filter(p => placementDesigners(p).length === 0).length
 
   return (
     <div className="p-4 md:p-8">
@@ -122,9 +131,24 @@ export function Placements({ placements = [], projects = [], members = [], onRef
                     onMouseLeave={e => e.currentTarget.style.background = ''}>
                     <td className="td font-medium text-nb">{p.project_name}</td>
                     <td className="td text-[13px]">
-                      {p.member_name
-                        ? <span style={{ color: '#0D3764' }}>{p.member_name}</span>
-                        : <span className="lowercase" style={{ color: 'rgba(13,55,100,0.50)' }}>designer tbd</span>}
+                      {(() => {
+                        const team = placementDesigners(p)
+                        if (!team.length) {
+                          return <span className="lowercase" style={{ color: 'rgba(13,55,100,0.50)' }}>designers tbd</span>
+                        }
+                        return (
+                          <div className="flex flex-wrap gap-1.5" onClick={e => e.stopPropagation()}>
+                            {team.map((d, i) => (
+                              <DesignerTag
+                                key={d.member_id || i}
+                                name={d.member_name}
+                                pct={d.pct}
+                                onClick={() => openMemberDetail(d.member_id)}
+                              />
+                            ))}
+                          </div>
+                        )
+                      })()}
                     </td>
                     <td className="td">
                       <span className="inline-flex items-center justify-center gap-1.5 text-[12px] font-mono border-2 lowercase whitespace-nowrap"
@@ -161,6 +185,14 @@ export function Placements({ placements = [], projects = [], members = [], onRef
           </table>
         </div>
       </div>
+
+      {detailMember && (
+        <MemberDetail
+          member={detailMember}
+          placements={placements}
+          onClose={() => setDetailMember(null)}
+        />
+      )}
 
       {editing !== null && (
         <PlacementDrawer

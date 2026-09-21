@@ -20,6 +20,33 @@ function Chip({ bg, text, border, children }) {
   )
 }
 
+// Clickable chip for a designer on a placement — name plus the capacity they
+// hold on that project. Opens their read-only detail view.
+export function DesignerTag({ name, pct, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={`${name} — view details`}
+      className="inline-flex items-center gap-1.5 font-mono text-[12px] font-medium px-2.5 py-[3px] whitespace-nowrap cursor-pointer transition-all"
+      style={{ background: U.slate.bg, color: U.slate.text }}
+      onMouseEnter={e => {
+        e.currentTarget.style.background = 'rgba(100,116,139,0.20)'
+        e.currentTarget.style.boxShadow = '2px 2px 0px #0D3764'
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.background = U.slate.bg
+        e.currentTarget.style.boxShadow = 'none'
+      }}
+    >
+      {name}
+      {pct != null && (
+        <span style={{ color: U.green.text }}>{pct}%</span>
+      )}
+    </button>
+  )
+}
+
 export function StatusPill({ status }) {
   const map = {
     'On Project': { ...U.green,  label: 'on project' },

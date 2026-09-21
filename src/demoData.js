@@ -66,7 +66,7 @@ export const demoPlacements = [
   // Stage 1: brief written, designer not decided yet — the case the whole
   // project-first model exists for.
   {
-    id: 'pl1', member_id: null, member_name: '',
+    id: 'pl1', member_id: null, member_name: '', designers: [],
     project_id: 'p3', project_name: 'Client Atlas',
     stage: 'brief', squad: '', point_of_contact: '',
     arbisoft_contact: '', timeline_notes: '', onboarding_date: null,
@@ -74,6 +74,9 @@ export const demoPlacements = [
   },
   {
     id: 'pl2', member_id: 'm4', member_name: 'Zoya Iqbal',
+    designers: [
+      { member_id: 'm4', member_name: 'Zoya Iqbal', squad: 'Squad 1', pct: 50, engagement: 'Part Time (50%)' },
+    ],
     project_id: 'p2', project_name: 'Client Meridian',
     stage: 'squad_poc', squad: 'Squad 1', point_of_contact: 'Ayesha Raza',
     arbisoft_contact: '', timeline_notes: '', onboarding_date: null,
@@ -81,6 +84,12 @@ export const demoPlacements = [
   },
   {
     id: 'pl3', member_id: 'm5', member_name: 'Faisal Khan',
+    // Several designers across squads, each at their own capacity.
+    designers: [
+      { member_id: 'm5', member_name: 'Faisal Khan',   squad: 'Squad 1', pct: 100, engagement: 'Full Time (100%)' },
+      { member_id: 'm7', member_name: 'Sana Tariq',    squad: 'Squad 2', pct: 50,  engagement: 'Part Time (50%)'  },
+      { member_id: 'm8', member_name: 'Omar Siddiqui', squad: 'Squad 3', pct: 25,  engagement: 'Part Time (25%)'  },
+    ],
     project_id: 'p1', project_name: 'Client Phoenix',
     stage: 'intro_call', squad: 'Squad 1', point_of_contact: 'Sana Tariq',
     arbisoft_contact: 'Usman Sheikh', timeline_notes: 'Kickoff targeted for early Oct.',
@@ -89,6 +98,9 @@ export const demoPlacements = [
   },
   {
     id: 'pl4', member_id: 'm6', member_name: 'Mariam Shah',
+    designers: [
+      { member_id: 'm6', member_name: 'Mariam Shah', squad: 'Squad 1', pct: 100, engagement: 'Full Time (100%)' },
+    ],
     project_id: 'p4', project_name: 'Client Juniper',
     stage: 'onboarding_set', squad: 'Squad 1', point_of_contact: 'Omar Siddiqui',
     arbisoft_contact: 'Hina Raza', timeline_notes: 'Two-week ramp agreed.',
@@ -97,6 +109,9 @@ export const demoPlacements = [
   },
   {
     id: 'pl5', member_id: 'm9', member_name: 'Danish Ali',
+    designers: [
+      { member_id: 'm9', member_name: 'Danish Ali', squad: 'Squad 1', pct: 75, engagement: 'Part Time (75%)' },
+    ],
     project_id: 'p1', project_name: 'Client Phoenix',
     stage: 'onboarding_set', squad: 'Squad 1', point_of_contact: 'Ayesha Raza',
     arbisoft_contact: 'Bilal Ahmed', timeline_notes: 'Onboarded ahead of schedule.',

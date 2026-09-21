@@ -3,6 +3,7 @@ import { Search, Plus, ChevronLeft, ChevronRight, MoveRight, Link2, Check } from
 import {
   totalAlloc, PROJECT_COLORS, formatDate, PLACEMENT_STAGE_LABELS,
   PLACEMENT_STAGE_COLORS, PLACEMENT_STAGE_ICONS, placementShareUrl, copyToClipboard,
+  placementDesigners,
 } from '../lib/utils'
 
 // Fixed box so the chip matches the placements page — width fits the longest
@@ -23,8 +24,11 @@ export function Roster({ squadName, members, projects = [], placements = [], onB
   const [showModal, setShowModal] = useState(false)
   const [copiedId, setCopiedId] = useState(null) // placement whose share link was just copied
 
+  // A placement can carry several designers, so match against the whole team
+  // rather than the single member_id column.
   function activePlacementFor(memberId) {
-    return placements.find(p => p.member_id === memberId)
+    return placements.find(p =>
+      placementDesigners(p).some(d => d.member_id === memberId))
   }
 
   async function copyShareLink(placement) {

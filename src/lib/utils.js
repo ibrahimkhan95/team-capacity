@@ -103,6 +103,31 @@ export const PLACEMENT_STAGE_DESCRIPTIONS = {
   onboarding_set: 'Onboarding date has been set for the designer.',
 }
 
+// A placement can carry several designers, each at their own capacity, and
+// they may come from different squads. Older rows hold a single member_id, so
+// normalise both shapes to one array rather than branching at every call site.
+export function placementDesigners(placement) {
+  if (Array.isArray(placement?.designers) && placement.designers.length) {
+    return placement.designers
+  }
+  if (placement?.member_id) {
+    return [{
+      member_id:   placement.member_id,
+      member_name: placement.member_name || '',
+      squad:       placement.squad || '',
+      pct:         100,
+      engagement:  'Full Time (100%)',
+    }]
+  }
+  return []
+}
+
+// Short label for a designer list — "Bilal Aslam 50% · Faisal Khan 100%".
+export function designersSummary(designers) {
+  if (!designers?.length) return ''
+  return designers.map(d => `${d.member_name} ${d.pct}%`).join(' · ')
+}
+
 export const placementStageIndex = (stage) => {
   const i = PLACEMENT_STAGES.indexOf(stage)
   return i === -1 ? 0 : i

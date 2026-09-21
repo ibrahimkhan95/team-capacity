@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { X, Copy, Check, TriangleAlert, ExternalLink } from 'lucide-react'
+import { X, Copy, Check, TriangleAlert, ExternalLink, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import {
   PLACEMENT_STAGES, PLACEMENT_STAGE_LABELS, PLACEMENT_STAGE_DESCRIPTIONS,
   placementShareUrl, totalAlloc, copyToClipboard, googleDocPreviewUrl, formatDate,
+  placementDesigners, ENGAGEMENT_OPTIONS,
 } from '../lib/utils'
 import { DEMO_ENABLED } from '../lib/demoMode'
 import { showToast } from './Toast'
@@ -23,7 +24,7 @@ export function PlacementDrawer({ placement, projects = [], allMembers = [], onC
   const [projectName, setProjectName] = useState(placement?.project_name || '')
   const [creatingProject, setCreatingProject] = useState(false)
 
-  const [memberId, setMemberId]     = useState(placement?.member_id || '')
+  const [designers, setDesigners]   = useState(() => placementDesigners(placement))
   const [stage, setStage]           = useState(placement?.stage || 'brief')
   const [poc, setPoc]               = useState(placement?.point_of_contact || '')
   const [arbisoftContact, setArbisoftContact] = useState(placement?.arbisoft_contact || '')
@@ -41,15 +42,22 @@ export function PlacementDrawer({ placement, projects = [], allMembers = [], onC
   const [visible, setVisible] = useState(false)
   const [copied, setCopied]   = useState(false)
 
-  // Designer picked at stage 2 — squad follows from wherever they sit on the roster.
-  const selectedMember = allMembers.find(m => m.id === memberId) || null
-  const squad = selectedMember?.squad || ''
-  const squadXdm = allMembers.find(m => m.squad === squad && m.seniority === 'XDM')
   const xdmOptions = allMembers.filter(m => m.seniority === 'XDM')
+  // Squads involved are derived from whoever is assigned — a placement can span
+  // more than one, so there's no single squad field any more.
+  const squadsInvolved = [...new Set(designers.map(d => d.squad).filter(Boolean))]
 
-  const currentAlloc = totalAlloc(selectedMember?.assignments)
-  const currentProjectNames = (selectedMember?.assignments || [])
-    .map(a => a.project_info?.name || a.project).join(', ')
+  // Anyone whose existing commitments plus this placement push them over 100%.
+  const overCommitted = designers
+    .map(d => {
+      const m = allMembers.find(x => x.id === d.member_id)
+      if (!m) return null
+      const existing = totalAlloc(m.assignments)
+      return existing + (d.pct || 0) > 100
+        ? { name: m.name, total: existing + (d.pct || 0) }
+        : null
+    })
+    .filter(Boolean)
 
   // Compare as YYYY-MM-DD strings — lexicographic order matches chronological
   // order for ISO dates, and it sidesteps timezone drift from Date parsing.
@@ -95,14 +103,16 @@ export function PlacementDrawer({ placement, projects = [], allMembers = [], onC
     setCreatingProject(false)
   }
 
-  function handleMemberSelect(id) {
-    setMemberId(id)
-    // Default the point of contact to that squad's XDM, but leave an explicit
-    // choice alone.
-    const m = allMembers.find(x => x.id === id)
-    if (m && !poc) {
-      const xdm = allMembers.find(x => x.squad === m.squad && x.seniority === 'XDM')
-      if (xdm) setPoc(xdm.name)
+  function handleDesignersChange(next) {
+    setDesigners(next)
+    // Default the point of contact to the first assigned designer's squad XDM,
+    // but never override an explicit choice.
+    if (!poc) {
+      const firstWithSquad = next.find(d => d.squad)
+      if (firstWithSquad) {
+        const xdm = allMembers.find(x => x.squad === firstWithSquad.squad && x.seniority === 'XDM')
+        if (xdm) setPoc(xdm.name)
+      }
     }
   }
 
@@ -120,10 +130,13 @@ export function PlacementDrawer({ placement, projects = [], allMembers = [], onC
       const payload = {
         project_id:        projectId,
         project_name:      projectName,
-        member_id:         memberId || null,
-        member_name:       selectedMember?.name || '',
+        // Only the first designer is persisted for now — `placements` has no
+        // column for the rest, and writing one would error. The multi-designer
+        // list is prototype-only until the junction table migration lands.
+        member_id:         designers[0]?.member_id || null,
+        member_name:       designers[0]?.member_name || '',
         stage,
-        squad,
+        squad:             designers[0]?.squad || '',
         point_of_contact:  poc,
         arbisoft_contact:  arbisoftContact,
         timeline_notes:    timelineNotes,
@@ -206,7 +219,11 @@ export function PlacementDrawer({ placement, projects = [], allMembers = [], onC
             </h2>
             <p className="text-[11px] font-mono mt-1 lowercase" style={{ color: 'rgba(13,55,100,0.60)' }}>
               {projectName || 'no project selected'}
-              {selectedMember ? ` · ${selectedMember.name}` : ' · designer tbd'}
+              {designers.length === 0
+                ? ' · designers tbd'
+                : designers.length === 1
+                  ? ` · ${designers[0].member_name || 'designer tbd'}`
+                  : ` · ${designers.length} designers`}
             </p>
           </div>
           <button onClick={close} className="p-1.5 transition-colors"
@@ -229,13 +246,13 @@ export function PlacementDrawer({ placement, projects = [], allMembers = [], onC
             </div>
           )}
 
-          {selectedMember && currentAlloc >= 100 && (
+          {overCommitted.length > 0 && (
             <div className="flex items-start gap-2.5 p-3 border-2 text-[12px] font-mono leading-relaxed"
               style={{ borderColor: '#E3492B', background: 'rgba(227,73,43,0.06)', color: '#0D3764' }}>
               <TriangleAlert size={15} strokeWidth={2} style={{ color: '#E3492B', flexShrink: 0, marginTop: 1 }} />
               <span>
-                {selectedMember.name} is already {currentAlloc}% allocated
-                {currentProjectNames ? ` on ${currentProjectNames}` : ''}. you can still assign them.
+                {overCommitted.map(o => `${o.name} would be at ${o.total}%`).join(', ')}
+                {' '}— over capacity. you can still assign them.
               </span>
             </div>
           )}
@@ -291,16 +308,14 @@ export function PlacementDrawer({ placement, projects = [], allMembers = [], onC
 
                 {s === 'squad_poc' && stage === 'squad_poc' && (
                   <DesignerWidget
-                    memberId={memberId}
-                    onMemberChange={handleMemberSelect}
+                    designers={designers}
+                    onDesignersChange={handleDesignersChange}
                     members={allMembers}
-                    squad={squad}
                     poc={poc}
                     onPocChange={setPoc}
                     arbisoftContact={arbisoftContact}
                     onArbisoftChange={setArbisoftContact}
                     xdmOptions={xdmOptions}
-                    squadXdm={squadXdm}
                   />
                 )}
 
@@ -332,8 +347,25 @@ export function PlacementDrawer({ placement, projects = [], allMembers = [], onC
             </DetailRow>
           )}
 
-          {stage !== 'squad_poc' && selectedMember && (
-            <DetailRow label="designer">{selectedMember.name} · {squad.toLowerCase()}</DetailRow>
+          {stage !== 'squad_poc' && designers.length > 0 && (
+            <DetailRow label={designers.length === 1 ? 'designer' : `designers (${designers.length})`}>
+              <div className="flex flex-col gap-1">
+                {designers.map((d, i) => (
+                  <div key={i} className="flex items-baseline gap-2">
+                    <span>{d.member_name || 'unassigned'}</span>
+                    <span className="text-[11px]" style={{ color: 'rgba(13,55,100,0.60)' }}>
+                      {d.squad?.toLowerCase()}
+                    </span>
+                    <span className="text-[11px] ml-auto" style={{ color: '#1B998B' }}>{d.pct}%</span>
+                  </div>
+                ))}
+                {squadsInvolved.length > 1 && (
+                  <span className="text-[11px] mt-0.5" style={{ color: 'rgba(13,55,100,0.60)' }}>
+                    spans {squadsInvolved.length} squads
+                  </span>
+                )}
+              </div>
+            </DetailRow>
           )}
 
           {stage !== 'squad_poc' && poc && (
@@ -360,7 +392,7 @@ export function PlacementDrawer({ placement, projects = [], allMembers = [], onC
             </DetailRow>
           )}
 
-          {!briefUrl && !selectedMember && !poc && !arbisoftContact && !timelineNotes && !onboardingDate && (
+          {!briefUrl && !designers.length && !poc && !arbisoftContact && !timelineNotes && !onboardingDate && (
             <p className="text-[12px] font-mono" style={{ color: 'rgba(13,55,100,0.50)' }}>
               nothing captured yet — fill each stage as you go.
             </p>
@@ -533,40 +565,139 @@ function BriefLinkWidget({ url, projectName, onChange, onShowPreview }) {
   )
 }
 
-// Stage 2 is where the designer is actually chosen — squad follows from them.
+// Stage 2 is where the designers are chosen. A project often takes a
+// combination of people, drawn from different squads, each at a different
+// capacity — so this is a repeatable list rather than a single picker.
 function DesignerWidget({
-  memberId, onMemberChange, members, squad,
-  poc, onPocChange, arbisoftContact, onArbisoftChange, xdmOptions, squadXdm,
+  designers, onDesignersChange, members,
+  poc, onPocChange, arbisoftContact, onArbisoftChange, xdmOptions,
 }) {
   const sorted = [...members].sort((a, b) => a.name.localeCompare(b.name))
+  const takenIds = designers.map(d => d.member_id).filter(Boolean)
+  const totalPct = designers.reduce((sum, d) => sum + (d.pct || 0), 0)
+
+  function addDesigner() {
+    onDesignersChange([
+      ...designers,
+      { member_id: '', member_name: '', squad: '', pct: 100, engagement: 'Full Time (100%)' },
+    ])
+  }
+
+  function removeDesigner(i) {
+    onDesignersChange(designers.filter((_, idx) => idx !== i))
+  }
+
+  function updateDesigner(i, patch) {
+    onDesignersChange(designers.map((d, idx) => (idx === i ? { ...d, ...patch } : d)))
+  }
+
+  function pickMember(i, memberId) {
+    const m = members.find(x => x.id === memberId)
+    updateDesigner(i, {
+      member_id:   memberId,
+      member_name: m?.name || '',
+      squad:       m?.squad || '',
+    })
+  }
 
   return (
-    <StageCard title="designer, squad & point of contact">
+    <StageCard title="designers, squads & point of contact">
       <>
-        <FormGroup label="designer">
-          <select value={memberId} onChange={e => onMemberChange(e.target.value)}
-            className={inputCls} style={inputStyle}>
-            <option value="">not decided yet…</option>
-            {sorted.map(m => (
-              <option key={m.id} value={m.id}>
-                {m.name} · {m.squad.toLowerCase()} · {m.seniority.toLowerCase()}
-              </option>
-            ))}
-          </select>
-        </FormGroup>
+        {designers.length === 0 && (
+          <p className="text-[11px] font-mono leading-relaxed" style={{ color: 'rgba(13,55,100,0.60)' }}>
+            no designers assigned yet — a project can take several, from different squads.
+          </p>
+        )}
 
-        <FormGroup label="squad">
-          <div className={inputCls} style={{ ...inputStyle, background: '#F4F4F4', color: 'rgba(13,55,100,0.60)' }}>
-            {squad || 'follows the designer'}
-          </div>
-        </FormGroup>
+        {designers.map((d, i) => {
+          const member = members.find(x => x.id === d.member_id)
+          // Capacity already committed elsewhere, ignoring this placement.
+          const existingAlloc = totalAlloc(member?.assignments)
+          const wouldExceed = member && existingAlloc + (d.pct || 0) > 100
+
+          return (
+            <div key={i} className="p-3 border-2 flex flex-col gap-3"
+              style={{ background: '#FFFFFF', borderColor: '#0D3764' }}>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium font-mono tracking-wider lowercase"
+                  style={{ color: 'rgba(13,55,100,0.60)' }}>
+                  designer {i + 1}
+                </span>
+                <button type="button" onClick={() => removeDesigner(i)}
+                  title="remove designer"
+                  className="text-lg font-mono leading-none transition-colors"
+                  style={{ color: 'rgba(13,55,100,0.50)' }}
+                  onMouseEnter={e => e.target.style.color = '#E3492B'}
+                  onMouseLeave={e => e.target.style.color = 'rgba(13,55,100,0.50)'}>×</button>
+              </div>
+
+              <FormGroup label="designer">
+                <select value={d.member_id} onChange={e => pickMember(i, e.target.value)}
+                  className={inputCls} style={inputStyle}>
+                  <option value="">select designer…</option>
+                  {sorted
+                    // Hide anyone already on this placement, except this row's own pick.
+                    .filter(m => m.id === d.member_id || !takenIds.includes(m.id))
+                    .map(m => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} · {m.squad.toLowerCase()} · {m.seniority.toLowerCase()}
+                      </option>
+                    ))}
+                </select>
+              </FormGroup>
+
+              <div className="grid grid-cols-2 gap-3">
+                <FormGroup label="squad">
+                  <div className={inputCls}
+                    style={{ ...inputStyle, background: '#F4F4F4', color: 'rgba(13,55,100,0.60)' }}>
+                    {d.squad || '—'}
+                  </div>
+                </FormGroup>
+
+                <FormGroup label="capacity">
+                  <select
+                    value={d.engagement}
+                    onChange={e => {
+                      const opt = ENGAGEMENT_OPTIONS.find(o => o.label === e.target.value)
+                      updateDesigner(i, { engagement: e.target.value, pct: opt?.pct ?? 100 })
+                    }}
+                    className={inputCls} style={inputStyle}>
+                    {ENGAGEMENT_OPTIONS.map(o => <option key={o.label}>{o.label}</option>)}
+                  </select>
+                </FormGroup>
+              </div>
+
+              {wouldExceed && (
+                <span className="text-[11px] font-mono leading-relaxed" style={{ color: '#E3492B' }}>
+                  {member.name} is already {existingAlloc}% allocated — adding {d.pct}% here
+                  puts them at {existingAlloc + d.pct}%.
+                </span>
+              )}
+            </div>
+          )
+        })}
+
+        <button type="button" onClick={addDesigner}
+          className="flex items-center justify-center gap-1.5 text-[13px] font-mono w-full py-2.5 px-3 border-2 cursor-pointer transition-all lowercase"
+          style={{ color: '#E3492B', background: 'transparent', borderColor: '#E3492B' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(227,73,43,0.06)'; e.currentTarget.style.boxShadow = '4px 4px 0px #0D3764' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.boxShadow = 'none' }}>
+          <Plus size={13} strokeWidth={2} />
+          add designer
+        </button>
+
+        {designers.length > 1 && (
+          <p className="text-[11px] font-mono" style={{ color: 'rgba(13,55,100,0.60)' }}>
+            {designers.length} designers · {totalPct}% combined capacity on this project
+          </p>
+        )}
 
         <FormGroup label="xdm point of contact">
           <select value={poc} onChange={e => onPocChange(e.target.value)} className={inputCls} style={inputStyle}>
             <option value="">select xdm…</option>
             {xdmOptions.map(m => (
               <option key={m.id} value={m.name}>
-                {m.name}{m.id === squadXdm?.id ? ` (${squad.toLowerCase()} xdm)` : ''}
+                {m.name} · {m.squad.toLowerCase()}
               </option>
             ))}
           </select>
